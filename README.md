@@ -1,7 +1,8 @@
 # Blade Duels
 
 A first-person blade duel tournament that runs in the browser (HTML5 canvas, no dependencies, no build step).
-8 fighters, 3 matches (quarterfinal, semifinal, final), each match best of 3 rounds.
+A gauntlet of 6 fights against rivals from level 1 to level 5, each fight best of 3 rounds. Win all six to be champion.
+16 weapons: before every fight you are dealt a random weapon and so is your rival (one shuffled deck per run, so no weapon repeats).
 
 ## Play
 
@@ -52,6 +53,32 @@ lens, slashes, a red vignette with a heartbeat and a trembling hand. Condition i
 (Unhurt, Scratched, Wounded, Badly hurt, Near death) on screen and in the panel.
 
 Keys: `Q W E R T` attack type, `1 2 3` direction, `Z X C` block.
+
+## Arsenal
+
+Every weapon changes damage per attack type, stamina costs, health and recovery. Most also bend one rule:
+
+| Weapon | Trait |
+|---|---|
+| Katana | Balanced, no weak spots |
+| Dagger | Cheap, strong quick strikes; low health |
+| Spear | Cheap, strong thrusts |
+| Axe | Brutal heavies, lots of health, tires quickly |
+| Rapier | Feints cost half; a Thrust that punishes a Feint hits ×2 |
+| Greatsword | Guard breaks hit ×1.5 harder; slow and tiring |
+| War Hammer | A guard break drains double stamina |
+| Flail | Your Heavy cannot be interrupted by a Quick; every block leaks 20% |
+| Sabre | Fast cuts and +2 recovery; poor thrusts |
+| Sai | A blocked Quick/Thrust is a parry after a single move; perfect block at speed 0.7 |
+| Nunchaku | Combos hit +50% harder |
+| Bo Staff | Resting recovers +6 extra stamina; perfect block at speed 0.7 |
+| Scythe | Low attacks ×1.35, high ×0.85 |
+| Halberd | High attacks ×1.25, low ×0.85; clumsy quick strikes |
+| Whip | Every block leaks 25%; cheap feints, fragile |
+| Sword & Board | Free blocks, -8% damage taken, perfect block at 0.7; soft hits |
+
+`node tests/balance.js 40` runs a round-robin between all weapons (level 3 balanced bots). Current spread is roughly 45%-57%
+average win rate per weapon.
 
 ## Install as an app (phone)
 

@@ -11,20 +11,19 @@
 
   const TURN_MS = 3000;
   const ME = { name: 'You', title: 'Contender', color: '#19e6ff' };
+  // Six rivals, weakest to strongest. Weapons are not fixed: every fight draws them from the whole arsenal.
   const ROSTER = [
-    { name: 'Taro', title: 'The Apprentice', weapon: 'katana', level: 1, persona: 'balanced', color: '#7cff6b', taunt: 'My first tournament... don\'t underestimate me!' },
-    { name: 'Hana', title: 'The Heron', weapon: 'dagger', level: 2, persona: 'trickster', color: '#ff9f1c', taunt: 'Are you sure you saw where my blade was going?' },
-    { name: 'Gorm', title: 'The Anvil', weapon: 'axe', level: 3, persona: 'brute', color: '#ff3b30', taunt: 'I will split your guard in two.' },
-    { name: 'Sora', title: 'Cutting Wind', weapon: 'spear', level: 3, persona: 'duelist', color: '#ffd60a', taunt: 'Nobody reaches me at range.' },
-    { name: 'Madame Kuro', title: 'The Widow', weapon: 'dagger', level: 4, persona: 'turtle', color: '#bf5af2', perks: ['guard'], taunt: 'Patience... I always win by waiting.' },
-    { name: 'Ren', title: 'Silent Wall', weapon: 'katana', level: 4, persona: 'balanced', color: '#30d158', perks: ['armor'], taunt: '...' },
-    { name: 'Ryuga', title: 'The Champion', weapon: 'katana', level: 5, persona: 'aggressive', color: '#ff2d95', perks: ['edge', 'lungs'], taunt: 'Three years undefeated. Show me something new.' },
+    { name: 'Taro', title: 'The Apprentice', level: 1, persona: 'balanced', color: '#7cff6b', taunt: 'My first tournament... don\'t underestimate me!' },
+    { name: 'Hana', title: 'The Heron', level: 2, persona: 'trickster', color: '#ff9f1c', taunt: 'Are you sure you saw where my blade was going?' },
+    { name: 'Gorm', title: 'The Anvil', level: 3, persona: 'brute', color: '#ff3b30', taunt: 'I will split your guard in two.' },
+    { name: 'Madame Kuro', title: 'The Widow', level: 4, persona: 'turtle', color: '#bf5af2', perks: ['guard'], taunt: 'Patience... I always win by waiting.' },
+    { name: 'Ren', title: 'Silent Wall', level: 4, persona: 'balanced', color: '#30d158', perks: ['armor'], taunt: '...' },
+    { name: 'Ryuga', title: 'The Champion', level: 5, persona: 'aggressive', color: '#ff2d95', perks: ['edge', 'lungs'], taunt: 'Three years undefeated. Show me something new.' },
   ];
-  const ROUND_NAMES = ['Quarterfinal', 'Semifinal', 'Grand Final'];
-
+  const FIGHT_NAMES = ['First Duel', 'Second Duel', 'Third Duel', 'Fourth Duel', 'Semifinal', 'Grand Final'];
   const G = {
     theme: store.get('theme', 'neon'), weapon: 'katana', perks: [],
-    scene: null, round: 0, bracket: null,
+    scene: null, fights: null,
   };
 
   // ---------- screen helpers ----------
@@ -188,59 +187,39 @@
     },
   };
 
-  // ---------- headless simulation of the other bracket matches ----------
-  function simulate(specA, specB) {
-    const A = BD.makeFighter(specA), B = BD.makeFighter(specB);
-    const brA = BD.makeBrain(A.level, A.persona), brB = BD.makeBrain(B.level, B.persona);
-    const w = { a: 0, b: 0 };
-    while (w.a < 2 && w.b < 2) {
-      const s = BD.newDuel(A, B);
-      for (;;) {
-        const ma = BD.decide(brA, s, 'a'), mb = BD.decide(brB, s, 'b');
-        ma.pa = BD.botSpeed(A.level); ma.pb = BD.botSpeed(A.level); mb.pa = BD.botSpeed(B.level); mb.pb = BD.botSpeed(B.level);
-        BD.observe(brA, mb); BD.observe(brB, ma);
-        BD.step(s, { a: ma, b: mb });
-        const r = BD.roundOver(s);
-        if (r.over) { w[r.winner]++; break; }
-      }
-    }
-    return w.a > w.b ? specA : specB;
-  }
-
   // ---------- screens ----------
   const WEAPON_STATS = (w) => `${w.hp} health · Quick ×${w.dmg.quick} · Heavy ×${w.dmg.heavy} · Thrust ×${w.dmg.thrust}`;
+  const weaponCard = (w, label, cls) => `<div class="card static ${cls || ''}"><small class="lbl">${label}</small><h3>${w.name}</h3><p>${w.desc}</p>` +
+    `<div class="trait">${w.trait}</div><div class="stats">${WEAPON_STATS(w)}</div></div>`;
 
   async function titleScreen() {
     const rules = `<div class="legend">
       <b>Each turn you pick 3 things in secret</b> (so does the rival): <b>attack type</b>, <b>direction</b> (high/mid/low) and <b>block</b> (high/mid/low).<br>
       <b>Quick</b> interrupts Heavy · <b>Heavy</b> breaks the guard · <b>Feint</b> opens up whoever blocks · <b>Thrust</b> punishes the Feint.<br>
       Chaining attacks builds <b>combos</b> with more damage, but the tree narrows: on the 3rd move only the finisher is left, and a Quick/Thrust blocked in a long streak is a <b>parry</b>.<br>
-      <b>You get 3 seconds per turn:</b> the faster you pick, the harder your attack hits (×0.8 to ×1.3) and the better your block holds (very fast = perfect block). If time runs out, the rest is filled in at random with no bonus. Everything costs <b>stamina</b>. You win a round by KO or by having more health at turn 14. Best of 3 rounds per match.</div>`;
-    await ask(`<h2>Blade Duels</h2><p>Supreme Blade Tournament · 8 fighters · 3 matches to glory</p>${rules}
+      <b>You get 3 seconds per turn:</b> the faster you pick, the harder your attack hits (×0.8 to ×1.3) and the better your block holds (very fast = perfect block). If time runs out, the rest is filled in at random with no bonus. Everything costs <b>stamina</b>. You win a round by KO or by having more health at turn 14. Best of 3 rounds per fight.<br>
+      <b>The arsenal:</b> ${BD.WEAPON_IDS.length} weapons. Before every fight you are dealt a different weapon, and so is your rival. Adapt your game to what you are holding.</div>`;
+    await ask(`<h2>Blade Duels</h2><p>Supreme Blade Tournament · ${ROSTER.length} fights to glory</p>${rules}
       <div><button class="cta" data-val="go">Enter the tournament</button></div>`);
   }
 
-  async function weaponScreen() {
-    const cards = Object.values(BD.WEAPONS).map((w) => `<button class="card" data-val="${w.id}"><h3>${w.name}</h3><p>${w.desc}</p><div class="stats">${WEAPON_STATS(w)}</div></button>`).join('');
-    return ask(`<h2>Choose your weapon</h2><p>Each weapon changes damage, costs and health. The combo tree is the same.</p><div class="cards">${cards}</div>`);
+  function ladderHtml(cur) {
+    const rows = G.fights.map((f, i) => {
+      const st = f.won === true ? 'done' : f.won === false ? 'lost' : i === cur ? 'now' : 'next';
+      const sp = f.foe, hidden = i > cur;
+      const mark = f.won === true ? '✔' : f.won === false ? '✘' : i === cur ? '⚔' : String(i + 1);
+      return `<div class="rung ${st}"><span class="mk">${mark}</span><span class="nm"><span class="dot" style="background:${hidden ? '#555' : sp.color}"></span>` +
+        `${hidden ? '???' : esc(sp.name)}<small>${FIGHT_NAMES[i]}</small></span><span class="lv">${stars(sp.level).slice(0, sp.level)}</span></div>`;
+    });
+    return `<div class="ladder">${rows.join('')}</div>`;
   }
 
-  function bracketHtml(br, current) {
-    const slot = (sp, m) => {
-      if (!sp) return '<div class="slot"><span class="nm">—</span></div>';
-      const cls = ['slot', sp.isMe ? 'me' : '', m.winner ? (m.winner === sp ? 'win' : 'lose') : ''].join(' ');
-      return `<div class="${cls}"><span class="nm"><span class="dot" style="background:${sp.color}"></span>${esc(sp.name)}</span><span>${sp.isMe ? '' : stars(sp.level).slice(0, sp.level)}</span></div>`;
-    };
-    const col = (r) => `<div class="col"><h5>${ROUND_NAMES[r].toUpperCase()}</h5>${br[r].map((m, i) => `<div class="match ${current && current.r === r && current.i === i ? 'now' : ''}">${slot(m.a, m)}${slot(m.b, m)}</div>`).join('')}</div>`;
-    return `<div class="bracket">${col(0)}${col(1)}${col(2)}</div>`;
-  }
-
-  async function bracketScreen(r) {
-    const m = G.bracket[r][0], foe = m.b;
-    const weapon = BD.WEAPONS[foe.weapon];
+  async function fightScreen(i) {
+    const f = G.fights[i], foe = f.foe;
     const perks = (G.perks.length ? '<ul class="perks">' + G.perks.map((id) => { const p = BD.PERKS.find((x) => x.id === id); return `<li>✔ ${p.name}: ${p.desc}</li>`; }).join('') + '</ul>' : '');
-    await ask(`<h2>${ROUND_NAMES[r]}</h2>${bracketHtml(G.bracket, { r, i: 0 })}
-      <div class="vs"><b>${esc(ME.name)} vs ${esc(foe.name)}</b> — ${esc(foe.title)}<br>${weapon.name} · level ${stars(foe.level)}<br><span class="taunt">“${esc(foe.taunt)}”</span></div>${perks}
+    await ask(`<h2>Fight ${i + 1} of ${G.fights.length} · ${FIGHT_NAMES[i]}</h2>${ladderHtml(i)}
+      <div class="vs"><b>${esc(ME.name)} vs ${esc(foe.name)}</b> — ${esc(foe.title)}<br>level ${stars(foe.level)}<br><span class="taunt">“${esc(foe.taunt)}”</span></div>
+      <div class="cards duo">${weaponCard(BD.WEAPONS[f.weapon], 'Your weapon', 'mine')}${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs')}</div>${perks}
       <button class="cta" data-val="fight">Fight!</button>`);
   }
 
@@ -248,16 +227,16 @@
     const pool = BD.PERKS.filter((p) => !G.perks.includes(p.id)).sort(() => Math.random() - 0.5).slice(0, 3);
     if (!pool.length) return;
     const cards = pool.map((p) => `<button class="card" data-val="${p.id}"><h3>${p.name}</h3><p>${p.desc}</p></button>`).join('');
-    const id = await ask(`<h2>Victory!</h2><p>Pick an upgrade for the next match.</p><div class="cards">${cards}</div>`);
+    const id = await ask(`<h2>Victory!</h2><p>Pick an upgrade for the next fight.</p><div class="cards">${cards}</div>`);
     G.perks.push(id);
   }
 
   async function endScreen(champion, r) {
     BD.Audio.sfx(champion ? 'win' : 'lose');
     const html = champion
-      ? `<h2>Champion of the Supreme Blade!</h2><p>You beat all 7 rivals in the tournament.</p>${bracketHtml(G.bracket)}`
-      : `<h2>Eliminated</h2><p>You fell in the ${ROUND_NAMES[r].toLowerCase()}. The combo tree rewards whoever reads, not whoever insists.</p>${bracketHtml(G.bracket)}`;
-    return ask(html + `<div><button class="cta" data-val="same">Retry with ${BD.WEAPONS[G.weapon].name}</button><button class="cta alt" data-val="new">Change weapon</button></div>`);
+      ? `<h2>Champion of the Supreme Blade!</h2><p>You beat all ${G.fights.length} rivals with ${G.fights.length} different weapons.</p>${ladderHtml(G.fights.length)}`
+      : `<h2>Eliminated</h2><p>You fell in fight ${r + 1} of ${G.fights.length} (${FIGHT_NAMES[r].toLowerCase()}). The combo tree rewards whoever reads, not whoever insists.</p>${ladderHtml(r)}`;
+    return ask(html + `<div><button class="cta" data-val="again">Try again</button></div>`);
   }
 
   // ---------- match ----------
@@ -295,24 +274,25 @@
   }
 
   // ---------- tournament ----------
+  const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+  // Every fight deals a weapon to you and one to the rival. Drawn from one shuffled deck, so within a run
+  // no weapon shows up twice.
+  function dealFights() {
+    const deck = shuffle(BD.WEAPON_IDS), n = ROSTER.length;
+    return ROSTER.map((r, i) => ({ foe: Object.assign({}, r, { weapon: deck[n + i] }), weapon: deck[i], won: null }));
+  }
+
   async function tournament() {
-    const meSpec = Object.assign({ isMe: true, level: 3 }, ME);
-    const R = ROSTER.map((r) => Object.assign({}, r));
     G.perks = [];
-    G.bracket = [
-      [{ a: meSpec, b: R[0] }, { a: R[1], b: R[2] }, { a: R[3], b: R[4] }, { a: R[5], b: R[6] }],
-      [{}, {}],
-      [{}],
-    ];
-    for (let r = 0; r < 3; r++) {
-      if (r > 0) G.bracket[r].forEach((m, i) => { m.a = G.bracket[r - 1][i * 2].winner; m.b = G.bracket[r - 1][i * 2 + 1].winner; });
-      // the other matches resolve on their own
-      G.bracket[r].forEach((m, i) => { if (i > 0) m.winner = simulate(m.a, m.b); });
-      await bracketScreen(r);
-      const won = await playMatch(G.bracket[r][0].b);
-      G.bracket[r][0].winner = won ? meSpec : G.bracket[r][0].b;
-      if (!won) { G.scene.hud.round = 1; return { champion: false, r }; }
-      if (r < 2) { BD.Audio.sfx('win'); await perkScreen(); }
+    G.fights = dealFights();
+    for (let i = 0; i < G.fights.length; i++) {
+      const f = G.fights[i];
+      G.weapon = f.weapon;
+      await fightScreen(i);
+      f.won = await playMatch(f.foe);
+      if (!f.won) { G.scene.hud.round = 1; return { champion: false, r: i }; }
+      if (i < G.fights.length - 1) { BD.Audio.sfx('win'); await perkScreen(); }
     }
     return { champion: true };
   }
@@ -339,12 +319,8 @@
 
     await titleScreen(); BD.Audio.unlock();
     for (;;) {
-      G.weapon = await weaponScreen();
-      for (;;) {
-        const r = await tournament();
-        const next = await endScreen(r.champion, r.r);
-        if (next === 'new') break;
-      }
+      const r = await tournament();
+      await endScreen(r.champion, r.r);
     }
   }
 

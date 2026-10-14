@@ -129,16 +129,76 @@
     const P = (d, n) => ({ x: ox + c * d - s * (n || 0), y: oy + s * d + c * (n || 0) });
     const steel = '#e8eef5';
     const blade = (pts) => { poly(ctx, pts); paint(ctx, st, { nfill: '#0d1a2a', col, w: Math.max(2, t * 0.12), pfill: steel, pw: Math.max(3, t * 0.2) }); };
+    const wood = '#7a4a25', grip = '#3a2418', gold = '#d4a017';
+    const guard = (d, w) => thick(ctx, st, [P(d, -w), P(d, w)], t * 0.42, col, gold);
+    const ball = (p, r, fill) => { ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 6.283); paint(ctx, st, { nfill: '#0d1a2a', col, w: 3, pfill: fill || '#8d8d96', pw: 5 }); };
     if (shape === 'spear') {
-      thick(ctx, st, [P(-L * 0.25), P(L * 0.78)], t * 0.55, col, '#7a4a25');
+      thick(ctx, st, [P(-L * 0.25), P(L * 0.78)], t * 0.55, col, wood);
       blade([P(L * 0.74, -t * 0.7), P(L), P(L * 0.74, t * 0.7)]);
     } else if (shape === 'axe') {
-      thick(ctx, st, [P(-L * 0.2), P(L * 0.92)], t * 0.5, col, '#7a4a25');
+      thick(ctx, st, [P(-L * 0.2), P(L * 0.92)], t * 0.5, col, wood);
       blade([P(L * 0.7), P(L * 0.68, -t * 2.2), P(L * 0.92, -t * 2.7), P(L, -t * 0.5), P(L * 0.9)]);
+    } else if (shape === 'rapier') { // thin needle, cup guard
+      thick(ctx, st, [P(-L * 0.22), P(0)], t * 0.45, col, grip);
+      blade([P(0, t * 0.16), P(L, 0), P(0, -t * 0.16)]);
+      guard(3, t * 1.5);
+      thick(ctx, st, [P(3, -t * 1.5), P(L * 0.12, -t * 0.7), P(L * 0.12, t * 0.7), P(3, t * 1.5)], t * 0.2, col, gold);
+    } else if (shape === 'greatsword') { // wide, long blade, big crossguard
+      thick(ctx, st, [P(-L * 0.3), P(0)], t * 0.4, col, grip);
+      blade([P(0, t * 0.8), P(L * 0.9, t * 0.6), P(L, 0), P(L * 0.9, -t * 0.6), P(0, -t * 0.8)]);
+      thick(ctx, st, [P(0, -t * 0.55), P(L * 0.8, -t * 0.4)], t * 0.12, col, '#9aa3ad');
+      guard(2, t * 2.1);
+    } else if (shape === 'sabre') { // curved cutting blade
+      thick(ctx, st, [P(-L * 0.25), P(0)], t * 0.45, col, grip);
+      const cv = (d) => t * 1.1 * (d / L) * (d / L);
+      blade([P(0, t * 0.5), P(L * 0.5, t * 0.45 - cv(L * 0.5)), P(L * 0.9, t * 0.3 - cv(L * 0.9)), P(L, -cv(L) - t * 0.1),
+        P(L * 0.9, -t * 0.25 - cv(L * 0.9)), P(L * 0.5, -t * 0.4 - cv(L * 0.5)), P(0, -t * 0.5)]);
+      thick(ctx, st, [P(3, -t * 1.1), P(3, t * 1.1)], t * 0.4, col, gold);
+    } else if (shape === 'gladius') { // short leaf blade
+      thick(ctx, st, [P(-L * 0.25), P(0)], t * 0.4, col, grip);
+      blade([P(0, t * 0.4), P(L * 0.45, t * 0.75), P(L, 0), P(L * 0.45, -t * 0.75), P(0, -t * 0.4)]);
+      guard(2, t * 1.1);
+    } else if (shape === 'sai') { // central prong with two curved tines
+      thick(ctx, st, [P(-L * 0.3), P(0)], t * 0.45, col, grip);
+      blade([P(0, t * 0.2), P(L, 0), P(0, -t * 0.2)]);
+      [-1, 1].forEach((sd) => thick(ctx, st, [P(L * 0.04, sd * t * 0.3), P(L * 0.04, sd * t * 1.6), P(L * 0.36, sd * t * 1.8)], t * 0.2, col, steel));
+    } else if (shape === 'nunchaku') { // two sticks joined by a chain
+      thick(ctx, st, [P(-L * 0.35), P(L * 0.22)], t * 0.7, col, wood);
+      thick(ctx, st, [P(L * 0.22), P(L * 0.34, t * 0.4), P(L * 0.44, t * 0.5)], t * 0.12, col, '#8d8d96');
+      thick(ctx, st, [P(L * 0.44, t * 0.5), P(L * 0.9, t * 2.2)], t * 0.7, col, wood);
+    } else if (shape === 'staff') { // long banded pole
+      thick(ctx, st, [P(-L * 0.4), P(L)], t * 0.62, col, wood);
+      [-0.38, 0.0, 0.5, 0.98].forEach((u) => thick(ctx, st, [P(L * u, -t * 0.55), P(L * u, t * 0.55)], t * 0.3, col, '#c9c3b8'));
+    } else if (shape === 'scythe') { // pole with a long curved blade bent sideways
+      thick(ctx, st, [P(-L * 0.3), P(L * 0.9)], t * 0.5, col, wood);
+      blade([P(L * 0.78, 0), P(L * 0.84, -t * 1.4), P(L * 0.98, -t * 2.6), P(L * 1.02, -t * 4.2), P(L * 0.88, -t * 3.0), P(L * 0.7, -t * 1.6), P(L * 0.72, 0)]);
+    } else if (shape === 'halberd') { // spike, axe blade and hook
+      thick(ctx, st, [P(-L * 0.25), P(L * 0.85)], t * 0.5, col, wood);
+      blade([P(L * 0.82, -t * 0.4), P(L, 0), P(L * 0.82, t * 0.4)]);
+      blade([P(L * 0.6), P(L * 0.58, -t * 2.1), P(L * 0.8, -t * 2.5), P(L * 0.86, -t * 0.3), P(L * 0.78)]);
+      blade([P(L * 0.62, t * 0.1), P(L * 0.68, t * 1.5), P(L * 0.74, t * 0.1)]);
+    } else if (shape === 'hammer') { // big block head
+      thick(ctx, st, [P(-L * 0.3), P(L * 0.8)], t * 0.55, col, wood);
+      blade([P(L * 0.72, -t * 1.7), P(L * 1.02, -t * 1.7), P(L * 1.02, t * 1.7), P(L * 0.72, t * 1.7)]);
+      thick(ctx, st, [P(L * 0.87, -t * 1.7), P(L * 0.87, t * 1.7)], t * 0.14, col, '#9aa3ad');
+    } else if (shape === 'flail') { // handle, chain and spiked ball
+      thick(ctx, st, [P(-L * 0.3), P(L * 0.42)], t * 0.55, col, wood);
+      thick(ctx, st, [P(L * 0.42), P(L * 0.58, -t * 0.9), P(L * 0.76, -t * 0.5)], t * 0.16, col, '#8d8d96');
+      const c0 = P(L * 0.88, -t * 0.6), r0 = t * 0.95;
+      for (let i = 0; i < 8; i++) {
+        const an = i * Math.PI / 4 + ang * D2R;
+        blade([{ x: c0.x + Math.cos(an - 0.22) * r0, y: c0.y + Math.sin(an - 0.22) * r0 }, { x: c0.x + Math.cos(an) * r0 * 1.7, y: c0.y + Math.sin(an) * r0 * 1.7 }, { x: c0.x + Math.cos(an + 0.22) * r0, y: c0.y + Math.sin(an + 0.22) * r0 }]);
+      }
+      ball(c0, r0);
+    } else if (shape === 'whip') { // handle and a long wavy lash
+      thick(ctx, st, [P(-L * 0.2), P(L * 0.08)], t * 1.0, col, grip);
+      const pts = [];
+      for (let i = 0; i <= 10; i++) { const u = i / 10; pts.push(P(L * (0.08 + 0.92 * u), Math.sin(u * 9) * t * (0.4 + u * 1.2))); }
+      thick(ctx, st, pts, t * 0.35, col, '#6b3b1d');
     } else {
-      thick(ctx, st, [P(-L * 0.28), P(0)], t * 0.5, col, '#3a2418');
+      thick(ctx, st, [P(-L * 0.28), P(0)], t * 0.5, col, grip);
       blade([P(0, t / 2), P(L * 0.9, t * 0.22), P(L), P(L * 0.9, -t * 0.22), P(0, -t / 2)]);
-      thick(ctx, st, [P(2, -t * 1.5), P(2, t * 1.5)], t * 0.42, col, '#d4a017');
+      guard(2, t * 1.5);
     }
   }
 
@@ -167,8 +227,10 @@
     open: ['WHOOSH!', 'WHIFF!'],
   };
   const TONE = { hit: '#e63946', heavy: '#c1121f', block: '#1d6fd8', break: '#f77f00', parry: '#7b2cbf', open: '#0aa89e' };
-  const WLEN = { blade: 330, dagger: 190, spear: 470, axe: 300 };
-  const WTHK = { blade: 34, dagger: 42, spear: 28, axe: 26 };
+  const WLEN = { blade: 330, dagger: 190, spear: 470, axe: 300, rapier: 380, greatsword: 410, sabre: 340, gladius: 230, sai: 200, nunchaku: 280,
+    staff: 460, scythe: 430, halberd: 480, hammer: 340, flail: 340, whip: 440 };
+  const WTHK = { blade: 34, dagger: 42, spear: 28, axe: 26, rapier: 30, greatsword: 46, sabre: 34, gladius: 44, sai: 36, nunchaku: 24,
+    staff: 24, scythe: 26, halberd: 28, hammer: 28, flail: 26, whip: 15 };
 
     // ---------- Scene ----------
   class Scene {

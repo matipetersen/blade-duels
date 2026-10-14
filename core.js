@@ -53,28 +53,58 @@
     { seq: ['quick', 'quick'], name: 'Scissors', mult: 1.25 },
   ];
 
+  // Weapon fields:
+  //   dmg / cost   multipliers per attack type (cost also has feint)
+  //   hp, st, regen, len, shape
+  // Optional traits (all read in step()/makeFighter()):
+  //   zoneMult [high, mid, low]  multiplies the damage of each direction
+  //   blockChip     share of the damage that leaks through a correct block (quick/thrust/heavy)
+  //   gbMult        guard-break damage and stamina drain multiplier
+  //   noInterrupt   a Heavy is not cut off by a Quick
+  //   punishMult    damage of a Thrust that punishes a Feint (default 1.5)
+  //   parryAt       streak length at which a blocked Quick/Thrust becomes a parry (default 2)
+  //   perfectAt     decision speed that makes a block perfect (default 0.8)
+  //   restBonus     extra stamina recovered when resting (default 14)
+  //   comboBoost    added to the combo damage boost
+  //   armor         damage taken multiplier;  blockFree: blocking costs no stamina
+  const W = (id, name, trait, desc, o) => Object.assign({ id, name, trait, desc }, o);
+  const D = (quick, heavy, thrust) => ({ quick, heavy, thrust });
+  const C = (quick, heavy, thrust, feint) => ({ quick, heavy, thrust, feint });
   const WEAPONS = {
-    katana: {
-      id: 'katana', name: 'Katana', desc: 'Balanced. No weak spots.',
-      dmg: { quick: 1, heavy: 1, thrust: 1 }, cost: { quick: 1, heavy: 1, thrust: 1, feint: 1 },
-      hp: 106, st: 100, regen: 8, len: 84, shape: 'blade',
-    },
-    dagger: {
-      id: 'dagger', name: 'Dagger', desc: 'Cheap, deadly quick strikes. Weak heavy. Low health.',
-      dmg: { quick: 1.6, heavy: 0.75, thrust: 1.05 }, cost: { quick: 0.65, heavy: 1, thrust: 1, feint: 0.8 },
-      hp: 94, st: 100, regen: 9, len: 46, shape: 'dagger',
-    },
-    spear: {
-      id: 'spear', name: 'Spear', desc: 'Devastating, cheap thrusts. Weak quick strikes.',
-      dmg: { quick: 0.85, heavy: 0.9, thrust: 1.3 }, cost: { quick: 1, heavy: 1, thrust: 0.9, feint: 1 },
-      hp: 100, st: 100, regen: 8, len: 138, shape: 'spear',
-    },
-    axe: {
-      id: 'axe', name: 'Axe', desc: 'Brutal heavy strikes and lots of health. Tires quickly.',
-      dmg: { quick: 0.8, heavy: 1.28, thrust: 0.9 }, cost: { quick: 1.1, heavy: 1, thrust: 1.1, feint: 1.1 },
-      hp: 108, st: 100, regen: 7, len: 76, shape: 'axe',
-    },
+    katana: W('katana', 'Katana', 'Balanced', 'Balanced. No weak spots.',
+      { dmg: D(1, 1, 1), cost: C(1, 1, 1, 1), hp: 106, st: 100, regen: 8, len: 84, shape: 'blade' }),
+    dagger: W('dagger', 'Dagger', 'Cheap quick strikes', 'Cheap, deadly quick strikes. Weak heavy. Low health.',
+      { dmg: D(1.6, 0.75, 1.05), cost: C(0.65, 1, 1, 0.8), hp: 94, st: 100, regen: 9, len: 46, shape: 'dagger' }),
+    spear: W('spear', 'Spear', 'Cheap, strong thrusts', 'Devastating, cheap thrusts. Weak quick strikes.',
+      { dmg: D(0.85, 0.9, 1.3), cost: C(1, 1, 0.9, 1), hp: 100, st: 100, regen: 8, len: 138, shape: 'spear' }),
+    axe: W('axe', 'Axe', 'Brutal heavies', 'Brutal heavy strikes and lots of health. Tires quickly.',
+      { dmg: D(0.8, 1.28, 0.9), cost: C(1.1, 1, 1.1, 1.1), hp: 108, st: 100, regen: 7, len: 76, shape: 'axe' }),
+    rapier: W('rapier', 'Rapier', 'Feints cost half · Feint punish ×2', 'A duelist\'s needle: cheap feints and a vicious punish, but fragile and weak on heavy blows.',
+      { dmg: D(1.05, 0.65, 1.3), cost: C(0.9, 1.1, 0.85, 0.5), punishMult: 2.0, hp: 98, st: 100, regen: 8, len: 112, shape: 'rapier' }),
+    greatsword: W('greatsword', 'Greatsword', 'Guard breaks hit ×1.5', 'Huge swings that shatter guards. Slow, tiring and poor at quick strikes.',
+      { dmg: D(0.7, 1.35, 0.85), cost: C(1.2, 1.1, 1.1, 1.2), gbMult: 1.5, hp: 106, st: 95, regen: 7, len: 120, shape: 'greatsword' }),
+    hammer: W('hammer', 'War Hammer', 'Guard breaks drain ×2 stamina', 'Crushes shields: a guard break also drains a lot of the rival\'s stamina. Clumsy otherwise.',
+      { dmg: D(0.75, 1.2, 0.7), cost: C(1.1, 1.05, 1.1, 1.1), gbMult: 2.0, hp: 104, st: 100, regen: 7, len: 90, shape: 'hammer' }),
+    flail: W('flail', 'Flail', 'Heavy cannot be interrupted · Blocks leak 20%', 'The ball swings around the guard: Quick cannot cut off your Heavy and every block leaks a little.',
+      { dmg: D(0.8, 1.1, 0.7), cost: C(1.05, 1.1, 1.1, 1.1), noInterrupt: true, blockChip: 0.2, hp: 100, st: 100, regen: 8, len: 100, shape: 'flail' }),
+    sabre: W('sabre', 'Sabre', 'Tireless: +2 recovery', 'Fast curved cuts and good wind, but poor thrusts.',
+      { dmg: D(1.25, 1.1, 0.75), cost: C(0.85, 1, 1.1, 1), hp: 100, st: 100, regen: 10, len: 90, shape: 'sabre' }),
+    sai: W('sai', 'Sai', 'Parries from streak 1 · Perfect block at 0.7', 'Trapping forks: a blocked Quick or Thrust is already a parry after a single move. Little damage on heavy blows.',
+      { dmg: D(1.35, 0.8, 1.1), cost: C(0.8, 1.05, 1, 0.9), parryAt: 1, perfectAt: 0.7, hp: 100, st: 100, regen: 8, len: 52, shape: 'sai' }),
+    nunchaku: W('nunchaku', 'Nunchaku', 'Combos hit +50% harder', 'Whirling chains: very cheap, very fast, a combo machine. Poor thrust and low health.',
+      { dmg: D(1.4, 0.95, 0.85), cost: C(0.8, 1.05, 1.1, 0.9), comboBoost: 0.5, hp: 100, st: 100, regen: 8, len: 70, shape: 'nunchaku' }),
+    staff: W('staff', 'Bo Staff', 'Rest recovers +6 stamina · Perfect block at 0.7', 'A monk\'s staff: endurance and a sturdy guard, nothing flashy.',
+      { dmg: D(1.05, 0.9, 0.9), cost: C(1, 1, 1, 1), restBonus: 6, perfectAt: 0.7, hp: 104, st: 100, regen: 10, len: 130, shape: 'staff' }),
+    scythe: W('scythe', 'Scythe', 'Low attacks ×1.35 · High ×0.85', 'Reaps the legs: low strikes hit far harder, high ones barely scratch.',
+      { dmg: D(1.05, 1.2, 0.8), zoneMult: [0.85, 1, 1.35], cost: C(1, 1, 1.1, 1), hp: 102, st: 100, regen: 8, len: 128, shape: 'scythe' }),
+    halberd: W('halberd', 'Halberd', 'High attacks ×1.3 · Low ×0.85', 'A long pole with axe and spike: strong overhead, poor against the legs. Clumsy quick strikes.',
+      { dmg: D(0.65, 1.1, 1.05), zoneMult: [1.25, 1, 0.85], cost: C(1.15, 1.05, 0.95, 1.1), hp: 100, st: 100, regen: 7, len: 150, shape: 'halberd' }),
+    whip: W('whip', 'Whip', 'Blocks leak 25% · Cheap feints', 'Wraps around the guard: even a correct block lets some damage through. Fragile, and weak when it must hit hard.',
+      { dmg: D(1.35, 0.8, 0.95), cost: C(0.75, 1.1, 1, 0.6), blockChip: 0.25, hp: 96, st: 100, regen: 9, len: 135, shape: 'whip' }),
+    gladius: W('gladius', 'Sword & Board', 'Free blocks · -8% damage taken · Perfect block at 0.7', 'A short sword behind a heavy shield: blocking is free and sturdy, but you hit softly.',
+      { dmg: D(0.85, 0.85, 0.85), cost: C(1, 1, 1, 1), blockFree: true, armor: 0.92, perfectAt: 0.7, hp: 108, st: 100, regen: 7, len: 60, shape: 'gladius' }),
   };
+  const WEAPON_IDS = Object.keys(WEAPONS);
 
   const PERKS = [
     { id: 'hp', name: 'Heart of Stone', desc: '+15 max health', apply: (m) => { m.hp += 15; } },
@@ -88,7 +118,7 @@
 
   function makeFighter(spec) {
     const w = WEAPONS[spec.weapon] || WEAPONS.katana;
-    const m = { hp: 0, st: 0, regen: 0, dmgMult: 1, armor: 1, blockFree: false, comboBoost: 1, reader: false };
+    const m = { hp: 0, st: 0, regen: 0, dmgMult: 1, armor: w.armor || 1, blockFree: !!w.blockFree, comboBoost: 1 + (w.comboBoost || 0), reader: false };
     (spec.perks || []).forEach((id) => {
       const p = PERKS.find((x) => x.id === id);
       if (p) p.apply(m);
@@ -188,30 +218,32 @@
       const sB = speedOf(md, 'pb'), chipMult = 1.4 - sB;
       let perfect = false;
       const base = TYPES[ma.type].dmg * wm * A.mods.dmgMult * pw;
-      const zm = ZONE_MULT[ma.zone];
+      const WA = WEAPONS[A.weapon];
+      const zm = ZONE_MULT[ma.zone] * (WA.zoneMult ? WA.zoneMult[ma.zone] : 1);
       const openMult = D.open ? 1.2 : 1;
       const combo = info[att].combo;
       const comboMult = combo ? 1 + (combo.mult - 1) * A.mods.comboBoost : 1;
+      const chip = WA.blockChip || 0, gb = WA.gbMult || 1;
       let kind, dmg = 0, counter = false;
 
-      if (ma.type === 'heavy' && md.type === 'quick') {
+      if (ma.type === 'heavy' && md.type === 'quick' && !WA.noInterrupt) {
         kind = 'interrupt'; flags[att].broken = true;
       } else if (ma.type === 'thrust' && md.type === 'feint') {
-        kind = 'punish'; dmg = base * zm * 1.5 * openMult;
+        kind = 'punish'; dmg = base * zm * (WA.punishMult || 1.5) * openMult;
         flags[def].broken = true;
       } else if (blocked) {
         if (ma.type === 'feint') {
           kind = 'feintOpen'; flags[def].open = true;
         } else if (ma.type === 'heavy') {
-          kind = 'guardbreak'; dmg = base * zm * 0.4 * chipMult; stLoss[def] += Math.round(12 * chipMult); flags[def].broken = true;
+          kind = 'guardbreak'; dmg = base * zm * 0.4 * gb * chipMult; stLoss[def] += Math.round(12 * gb * chipMult); flags[def].broken = true;
         } else if (ma.type === 'thrust') {
-          if (info[att].streak >= 2) { kind = 'parry'; flags[att].broken = true; flags[att].open = true; }
-          else { kind = 'block'; dmg = base * zm * 0.35 * chipMult; flags[att].broken = true; }
+          if (info[att].streak >= (WA.parryAt || 2)) { kind = 'parry'; flags[att].broken = true; flags[att].open = true; }
+          else { kind = 'block'; dmg = base * zm * (0.35 + chip) * chipMult; flags[att].broken = true; }
         } else { // quick
-          if (info[att].streak >= 2) { kind = 'parry'; flags[att].broken = true; flags[att].open = true; }
-          else kind = 'block';
+          if (info[att].streak >= (WA.parryAt || 2)) { kind = 'parry'; flags[att].broken = true; flags[att].open = true; }
+          else { kind = 'block'; dmg = base * zm * chip * chipMult; }
         }
-        if (kind === 'block' && sB >= PERFECT_BLOCK) { perfect = true; flags[att].broken = true; stLoss[att] += 5; }
+        if (kind === 'block' && sB >= (WEAPONS[D.weapon].perfectAt || PERFECT_BLOCK)) { perfect = true; flags[att].broken = true; stLoss[att] += 5; }
       } else if (ma.type === 'feint') {
         kind = 'whiff';
       } else {
@@ -233,7 +265,7 @@
       f.hp = Math.max(0, f.hp);
       f.st -= info[k].cost + blockCost(f) + stLoss[k];
       f.st = Math.max(0, f.st);
-      f.st = Math.min(f.maxSt, f.st + f.regen + (m.type === 'rest' ? 14 : 0));
+      f.st = Math.min(f.maxSt, f.st + f.regen + (m.type === 'rest' ? 14 + (WEAPONS[f.weapon].restBonus || 0) : 0));
       // streak
       if (m.type === 'rest' || flags[k].broken || info[k].streak >= MAX_CHAIN) f.chain = [];
       else f.chain.push({ type: m.type, zone: m.zone });
@@ -264,7 +296,7 @@
 
   Object.assign(BD, {
     ZONES, ZONE_MULT, TYPES, TYPE_ORDER, BLOCK_COST, MAX_CHAIN, TURN_LIMIT, COMBOS, WEAPONS, PERKS, NEUTRAL_SPEED, attackPower,
-    makeFighter, resetFighter, cloneState, newDuel, attackCost, blockCost, legalAttacks, isLegal, findCombo, step, roundOver,
+    WEAPON_IDS, makeFighter, resetFighter, cloneState, newDuel, attackCost, blockCost, legalAttacks, isLegal, findCombo, step, roundOver,
   });
   if (typeof module !== 'undefined' && module.exports) module.exports = BD;
 })();

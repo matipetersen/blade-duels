@@ -86,6 +86,24 @@ body.theme-primal .cta.alt { background: #3a2418; }
 .slot.lose { opacity: .4; text-decoration: line-through; }
 .slot.me .nm { color: var(--acc); }
 .slot .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.card.static { cursor: default; text-align: left; }
+.card.static:hover { border-color: var(--line); }
+.card.mine { border-color: var(--acc); }
+.card.theirs { border-color: var(--acc2); }
+.card .lbl { display: block; font-family: system-ui, sans-serif; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); font-size: 10px; margin-bottom: 4px; }
+.card .trait { font-size: 12px; color: var(--acc2); margin-top: 6px; font-family: system-ui, sans-serif; font-weight: 600; }
+.cards.duo { grid-template-columns: 1fr 1fr; }
+.ladder { display: grid; gap: 6px; margin: 12px 0; text-align: left; grid-template-columns: 1fr 1fr; grid-auto-flow: row; }
+.rung { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: center; padding: 7px 10px; background: var(--panel); border: 2px solid var(--line); border-radius: var(--radius); font-size: 14px; }
+.rung .mk { text-align: center; color: var(--dim); }
+.rung .nm small { display: block; font-family: system-ui, sans-serif; font-size: 11px; color: var(--dim); }
+.rung .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.rung.now { border-color: var(--acc2); box-shadow: 0 0 16px color-mix(in srgb, var(--acc2) 50%, transparent); }
+.rung.now .mk { color: var(--acc2); }
+.rung.done { background: color-mix(in srgb, var(--ok) 14%, var(--panel)); }
+.rung.done .mk { color: var(--ok); }
+.rung.lost { opacity: .55; }
+.rung.next { opacity: .7; }
 .vs { margin: 14px 0; padding: 12px; border: 2px dashed var(--line); border-radius: var(--radius); font-family: system-ui, sans-serif; }
 .vs b { font-family: var(--font); font-size: 20px; }
 .taunt { font-style: italic; color: var(--ink); }
@@ -100,6 +118,8 @@ body.theme-primal .cta.alt { background: #3a2418; }
   .btn { min-height: 56px; font-size: 13px; }
   .btn kbd { display: none; }
   .bracket { grid-template-columns: 1fr; }
+  .cards.duo { grid-template-columns: 1fr; }
+  .ladder { grid-template-columns: 1fr; }
   .topbar h1 { font-size: 14px; }
 }
 

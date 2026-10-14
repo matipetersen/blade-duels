@@ -1,4 +1,5 @@
-// node tests/sim.js [duels]   -> rules tests + balance simulation
+// node tests/sim.js [duels]   -> rules tests + weapon trait tests + balance simulation
+// node tests/balance.js       -> full weapon round-robin
 const assert = require('assert');
 const BD = require('../core.js');
 require('../ai.js');
@@ -128,12 +129,59 @@ function batch(label, wa, la, pa, wb, lb, pb, n) {
   console.log(`${label.padEnd(34)} A wins ${(100 * w / n).toFixed(0).padStart(3)}%  turns/round ${(turns / rounds).toFixed(1)}  rests ${(100 * rests / moves).toFixed(0)}%`);
 }
 
+// --- weapon traits ---
+(function weapons() {
+  assert.strictEqual(BD.WEAPON_IDS.length, 16);
+  BD.WEAPON_IDS.forEach((id) => { const w = BD.WEAPONS[id]; assert.ok(w.name && w.trait && w.desc && w.shape && w.hp > 0, id); });
+  const lost = (s, who) => s[who].maxHp - s[who].hp;
+  let s, r;
+  // flail: Quick does not cut off the Heavy
+  s = fresh('flail', 'katana'); r = BD.step(s, { a: dm('heavy', 1, 1), b: dm('quick', 1, 0) });
+  assert.notStrictEqual(r.out.a.kind, 'interrupt');
+  s = fresh('katana', 'katana'); r = BD.step(s, { a: dm('heavy', 1, 1), b: dm('quick', 1, 0) });
+  assert.strictEqual(r.out.a.kind, 'interrupt');
+  // whip / flail: a correct block still leaks some damage; katana leaks none
+  const leak = (w) => { const q = fresh(w, 'katana'); BD.step(q, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); return lost(q, 'b'); };
+  assert.strictEqual(leak('katana'), 0); assert.ok(leak('whip') > 0 && leak('flail') > 0);
+  // hammer: guard break drains more stamina than a katana's
+  const drain = (w) => { const q = fresh(w, 'katana'); q.b.st = 60; const st0 = q.b.st; BD.step(q, { a: dm('heavy', 1, 1), b: dm('rest', -1, 1) }); return st0 - q.b.st; };
+  assert.ok(drain('hammer') > drain('katana') + 5, 'hammer drain ' + drain('hammer') + ' vs ' + drain('katana'));
+  // rapier: thrust punishing a feint hits harder than the spear-free baseline
+  const pun = (w) => { const q = fresh(w, 'katana'); BD.step(q, { a: dm('thrust', 1, 0), b: dm('feint', 1, 0) }); return lost(q, 'b') / BD.WEAPONS[w].dmg.thrust; };
+  assert.ok(pun('rapier') > pun('katana') * 1.25);
+  // sai: a blocked Quick after ONE move is already a parry
+  s = fresh('sai', 'katana'); s.a.chain = [{ type: 'quick', zone: 0 }];
+  r = BD.step(s, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); assert.strictEqual(r.out.a.kind, 'parry');
+  s = fresh('katana', 'katana'); s.a.chain = [{ type: 'quick', zone: 0 }];
+  r = BD.step(s, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); assert.strictEqual(r.out.a.kind, 'block');
+  // perfect block threshold: a 0.75 block is perfect for a staff, not for a katana
+  const perfect = (w) => { const q = fresh('katana', w); q.a.chain = [{ type: 'quick', zone: 0 }]; return BD.step(q, { a: dm('quick', 1, 0), b: { type: 'rest', zone: -1, block: 1, pb: 0.75 } }).out.a.perfect; };
+  assert.strictEqual(perfect('staff'), true); assert.strictEqual(perfect('katana'), false);
+  // scythe hits low harder than high; halberd the opposite
+  const zone = (w, z) => { const q = fresh(w, 'katana'); BD.step(q, { a: dm('quick', z, 2 - z), b: dm('rest', -1, z === 1 ? 0 : 1) }); return lost(q, 'b'); };
+  assert.ok(zone('scythe', 2) > zone('scythe', 0)); assert.ok(zone('halberd', 0) > zone('halberd', 2));
+  // sword & board: free blocks and less damage taken
+  s = fresh('gladius', 'katana'); s.a.st = 50; BD.step(s, { a: dm('rest', -1, 1), b: dm('rest', -1, 1) });
+  const t = fresh('katana', 'katana'); t.a.st = 50; BD.step(t, { a: dm('rest', -1, 1), b: dm('rest', -1, 1) });
+  assert.ok(s.a.st > t.a.st);
+  // staff recovers extra stamina on rest
+  s = fresh('staff', 'katana'); s.a.st = 40; t.a.st = 40; BD.step(s, { a: dm('rest', -1, 1), b: dm('rest', -1, 1) });
+  const u = fresh('katana', 'katana'); u.a.st = 40; BD.step(u, { a: dm('rest', -1, 1), b: dm('rest', -1, 1) });
+  assert.ok(s.a.st > u.a.st + 5);
+  // nunchaku: combos hit harder than the same combo with a katana (per unit of base damage)
+  const combo = (w) => { const q = fresh(w, 'katana'); BD.step(q, { a: dm('quick', 0, 0), b: dm('rest', -1, 0) }); const h0 = q.b.hp; BD.step(q, { a: dm('quick', 1, 0), b: dm('rest', -1, 2) }); return (h0 - q.b.hp) / BD.WEAPONS[w].dmg.quick; };
+  assert.ok(combo('nunchaku') > combo('katana'));
+  // every weapon only ever produces legal bot moves in a full duel against another one
+  BD.WEAPON_IDS.forEach((id, i) => { const o = BD.WEAPON_IDS[(i + 5) % BD.WEAPON_IDS.length]; const r2 = duel(id, 2, 'balanced', o, 2, 'balanced', 77 + i); assert.ok(r2.rounds >= 2); });
+  console.log('weapons OK');
+})();
+
 const N = +process.argv[2] || 40;
 const t0 = Date.now();
 batch('level 5 vs level 1', 'katana', 5, 'balanced', 'katana', 1, 'balanced', N);
 batch('level 3 vs level 1', 'katana', 3, 'balanced', 'katana', 1, 'balanced', N);
 batch('level 3 vs level 3 (mirror)', 'katana', 3, 'balanced', 'katana', 3, 'balanced', N);
-['dagger', 'spear', 'axe'].forEach((w) => batch(`katana vs ${w} (level 3)`, 'katana', 3, 'balanced', w, 3, 'balanced', N));
+['dagger', 'spear', 'axe', 'rapier', 'greatsword', 'whip'].forEach((w) => batch(`katana vs ${w} (level 3)`, 'katana', 3, 'balanced', w, 3, 'balanced', N));
 batch('spear vs axe (level 3)', 'spear', 3, 'balanced', 'axe', 3, 'balanced', N);
 batch('dagger vs axe (level 3)', 'dagger', 3, 'balanced', 'axe', 3, 'balanced', N);
 ['aggressive', 'turtle', 'trickster', 'brute', 'duelist'].forEach((p) => batch(`${p} vs balanced (level 4)`, 'katana', 4, p, 'katana', 4, 'balanced', N));

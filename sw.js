@@ -1,7 +1,7 @@
 /* Blade Duels - minimal service worker.
  * Network-first: when you update the game you always get the new version while online;
  * the cache is only a fallback so the installed app still opens offline. */
-const CACHE = 'blade-duels-v1';
+const CACHE = 'blade-duels-v2';
 const ASSETS = ['./', 'index.html', 'style.css', 'core.js', 'ai.js', 'audio.js', 'render.js', 'main.js', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
