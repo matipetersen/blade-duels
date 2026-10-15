@@ -92,7 +92,7 @@ Every weapon changes damage per attack type, stamina costs, health and recovery.
 | Whip | Every block leaks 25%; cheap feints, fragile |
 | Sword & Board | Free blocks, -8% damage taken, perfect block at 0.7; soft hits |
 
-`node tests/balance.js 40` runs a round-robin between all weapons (level 3 balanced bots). Current spread is roughly 45%-57%
+`node tests/balance.js 40` runs a round-robin between all weapons (level 3 balanced bots). Current spread is roughly 45%-54%
 average win rate per weapon.
 
 ## Install as an app (phone)
