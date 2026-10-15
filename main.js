@@ -65,7 +65,7 @@
   // ---------- choice panel ----------
   const panel = {
     sel: { type: null, zone: null, block: null }, me: null, foe: null, habit: null, resolve: null,
-    t0: 0, tAtk: null, tBlk: null, timerId: 0, lastTick: 0,
+    t0: 0, tAtk: null, tBlk: null, timerId: 0, lastTick: 0, paused: 0,
     build() {
       const types = $('#types'), az = $('#azones'), bz = $('#bzones');
       const keysT = ['Q', 'W', 'E', 'R', 'T'], keysA = ['1', '2', '3'], keysB = ['Z', 'X', 'C'];
@@ -77,7 +77,7 @@
       az.onclick = (e) => { const b = e.target.closest('[data-z]'); if (b && !b.disabled) this.pickZone(+b.dataset.z); };
       bz.onclick = (e) => { const b = e.target.closest('[data-b]'); if (b) this.pickBlock(+b.dataset.b); };
       document.addEventListener('keydown', (e) => {
-        if (!this.resolve || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (!this.resolve || this.paused || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
         const k = e.key.toUpperCase();
         const iT = keysT.indexOf(k), iA = keysA.indexOf(k), iB = keysB.indexOf(k);
         if (iT >= 0) { const t = BD.TYPE_ORDER[iT]; if (this.legalTypes().has(t)) this.pickType(t); }
@@ -130,10 +130,18 @@
       const slowA = !this.attackDone();
       this.finish({ type: atk.type, zone: atk.zone, block: s.block != null ? s.block : Math.floor(Math.random() * 3), pa: slowA ? 0 : this.speedOf(this.tAtk), pb: s.block != null ? this.speedOf(this.tBlk) : 0 });
     },
+    // the help guide freezes the 3-second clock while it is open
+    pause() { if (this.resolve && !this.paused) this.paused = performance.now(); },
+    resume() {
+      if (!this.paused) return;
+      const d = performance.now() - this.paused; this.paused = 0;
+      this.t0 += d; if (this.tAtk != null) this.tAtk += d; if (this.tBlk != null) this.tBlk += d;
+    },
     startTimer() {
-      this.t0 = performance.now(); this.tAtk = null; this.tBlk = null; this.lastTick = 3;
+      this.t0 = performance.now(); this.tAtk = null; this.tBlk = null; this.lastTick = 3; this.paused = 0;
       clearInterval(this.timerId);
       this.timerId = setInterval(() => {
+        if (this.paused) return;
         const left = Math.max(0, 1 - (performance.now() - this.t0) / TURN_MS);
         G.scene.timer = { frac: left, power: BD.attackPower(left) };
         const sec = left * TURN_MS / 1000;
@@ -189,27 +197,42 @@
 
   // ---------- screens ----------
   const fx = (n) => (+n.toFixed(2)).toString();
+  const bar = (label, v, max, txt) => `<span class="bl">${label}</span><span class="bt"><i style="width:${Math.round(100 * Math.min(1, v / max))}%"></i></span><span class="bv">${txt}</span>`;
   const WEAPON_STATS = (w) => {
-    const rows = [`${w.hp} health · +${w.regen} recovery · ${w.st} stamina`,
-      `Quick ×${fx(w.dmg.quick)} · Heavy ×${fx(w.dmg.heavy)} · Thrust ×${fx(w.dmg.thrust)}`,
-      `Cost: Quick ×${fx(w.cost.quick)} · Heavy ×${fx(w.cost.heavy)} · Thrust ×${fx(w.cost.thrust)} · Feint ×${fx(w.cost.feint)}`];
-    if (w.zoneMult) rows.push(`Direction: High ×${w.zoneMult[0]} · Mid ×${w.zoneMult[1]} · Low ×${w.zoneMult[2]}`);
-    return rows.join('<br>');
+    const rows = `<div class="bars">${bar('Health', w.hp, 120, w.hp)}${bar('Quick', w.dmg.quick, 1.6, '×' + fx(w.dmg.quick))}${bar('Heavy', w.dmg.heavy, 1.4, '×' + fx(w.dmg.heavy))}` +
+      `${bar('Thrust', w.dmg.thrust, 1.3, '×' + fx(w.dmg.thrust))}${bar('Recovery', w.regen, 10, '+' + w.regen)}</div>`;
+    const cost = `<div class="cst">Stamina cost ×: Quick ${fx(w.cost.quick)} · Heavy ${fx(w.cost.heavy)} · Thrust ${fx(w.cost.thrust)} · Feint ${fx(w.cost.feint)}` +
+      (w.zoneMult ? `<br>Direction: High ×${w.zoneMult[0]} · Mid ×${w.zoneMult[1]} · Low ×${w.zoneMult[2]}` : '') + '</div>';
+    return rows + cost;
   };
   const weaponBody = (w, label) => `<small class="lbl">${label}</small><h3>${w.name}</h3><p>${w.desc}</p>` +
-    `<div class="trait">${w.trait}</div><div class="stats">${WEAPON_STATS(w)}</div>`;
-  const shieldBody = (sh, w) => `<div class="trait">${w && w.twoHanded ? 'Two-handed grip · ' : ''}${sh.name}: ${sh.trait}</div>`;
+    `<div class="trait">${w.trait}</div>${WEAPON_STATS(w)}`;
+  const shieldBody = (sh, w) => `<div class="shl">${BD.Guide.shieldIcon(sh.id, 30)}<span><b>${sh.name}</b>${w && w.twoHanded ? ' (two-handed grip)' : ''}<br>${sh.trait}</span></div>`;
   const weaponCard = (w, label, cls, sh) => `<div class="card static ${cls || ''}">${weaponBody(w, label)}${sh ? shieldBody(sh, w) : ''}</div>`;
 
   async function titleScreen() {
-    const rules = `<div class="legend">
-      <b>Each turn you pick 3 things in secret</b> (so does the rival): <b>attack type</b>, <b>direction</b> (high/mid/low) and <b>block</b> (high/mid/low).<br>
-      <b>Quick</b> interrupts Heavy · <b>Heavy</b> breaks the guard · <b>Feint</b> opens up whoever blocks · <b>Thrust</b> punishes the Feint.<br>
-      Chaining attacks builds <b>combos</b> with more damage, but the tree narrows: on the 3rd move only the finisher is left, and a Quick/Thrust blocked in a long streak is a <b>parry</b>.<br>
-      <b>You get 3 seconds per turn:</b> the faster you pick, the harder your attack hits (×0.8 to ×1.3) and the better your block holds (very fast = perfect block). If time runs out, the rest is filled in at random with no bonus. Everything costs <b>stamina</b>. You win a round by KO or by having more health at turn 14. Best of 3 rounds per fight.<br>
-      <b>The arsenal:</b> ${BD.WEAPON_IDS.length} weapons. Before every fight you choose 1 of 3 weapons (no repeats in a run), after seeing the one your rival carries. Each rival fights with weapons that suit their style.</div>`;
-    await ask(`<h2>Blade Duels</h2><p>Supreme Blade Tournament · ${ROSTER.length} fights to glory</p>${rules}
-      <div><button class="cta" data-val="go">Enter the tournament</button></div>`);
+    for (;;) {
+      const v = await ask(`<h2>Blade Duels</h2><p>Supreme Blade Tournament · ${ROSTER.length} fights to glory</p>
+        <div class="pitch"><div><b>3 secret picks</b><span>attack, height and block, every turn</span></div>
+        <div><b>${BD.WEAPON_IDS.length} weapons · ${BD.SHIELD_IDS.length} off-hands</b><span>you choose your gear before each fight</span></div>
+        <div><b>3 seconds</b><span>the faster you decide, the harder you hit</span></div></div>
+        <div><button class="cta" data-val="go">Enter the tournament</button></div>
+        <div><button class="cta alt" data-val="guide">How to play</button></div>`);
+      if (v !== 'guide') break;
+      await BD.Guide.open({ final: 'Back to the menu' }); store.set('seen', '1');
+    }
+    // first time: walk through the basics before the first fight (can be skipped)
+    if (store.get('seen', '0') !== '1') { await BD.Guide.open({ final: 'Start the tournament' }); store.set('seen', '1'); }
+  }
+
+  // compact progress strip for the choice screens (the full ladder is kept for the end screen)
+  function stripHtml(cur) {
+    const pips = G.fights.map((f, i) => {
+      const st = f.won === true ? 'done' : f.won === false ? 'lost' : i === cur ? 'now' : 'next';
+      const mark = f.won === true ? '✔' : f.won === false ? '✘' : i === cur ? '⚔' : String(i + 1);
+      return `<span class="pip ${st}" title="${i > cur ? 'Locked' : esc(f.foe.name)}">${mark}</span>`;
+    });
+    return `<div class="strip" aria-label="Tournament progress">${pips.join('')}</div>`;
   }
 
   function ladderHtml(cur) {
@@ -226,7 +249,7 @@
   async function fightScreen(i) {
     const f = G.fights[i], foe = f.foe;
     const perks = (G.perks.length ? '<ul class="perks">' + G.perks.map((id) => { const p = BD.PERKS.find((x) => x.id === id); return `<li>✔ ${p.name}: ${p.desc}</li>`; }).join('') + '</ul>' : '');
-    await ask(`<h2>Fight ${i + 1} of ${G.fights.length} · ${FIGHT_NAMES[i]}</h2>${ladderHtml(i)}
+    await ask(`<h2>Fight ${i + 1} of ${G.fights.length} · ${FIGHT_NAMES[i]}</h2>${stripHtml(i)}
       <div class="vs"><b>${esc(ME.name)} vs ${esc(foe.name)}</b> — ${esc(foe.title)}<br>level ${stars(foe.level)}<br><span class="taunt">“${esc(foe.taunt)}”</span></div>
       <div class="cards duo">${weaponCard(BD.WEAPONS[f.weapon], 'Your weapon', 'mine', BD.SHIELDS[f.shield])}${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs', BD.SHIELDS[foe.shield])}</div>${perks}
       <button class="cta" data-val="fight">Fight!</button>`);
@@ -236,7 +259,7 @@
   async function weaponScreen(i, options) {
     const f = G.fights[i], foe = f.foe;
     const cards = options.map((id) => `<button class="card" data-val="${id}">${weaponBody(BD.WEAPONS[id], 'Pick')}</button>`).join('');
-    return ask(`<h2>Fight ${i + 1} of ${G.fights.length} · Choose your weapon</h2>${ladderHtml(i)}
+    return ask(`<h2>Fight ${i + 1} of ${G.fights.length} · Choose your weapon</h2>${stripHtml(i)}
       <div class="vs"><b>${esc(foe.name)}</b> — ${esc(foe.title)}<br>carries:</div>
       <div class="cards duo">${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs', BD.SHIELDS[foe.shield])}</div>
       <p>Pick the weapon that counters it.</p><div class="cards">${cards}</div>`);
@@ -247,7 +270,7 @@
     const ids = BD.legalShields(weaponId);
     if (ids.length === 1) return ids[0];
     const foe = G.fights[i].foe, w = BD.WEAPONS[weaponId];
-    const cards = ids.map((id) => { const sh = BD.SHIELDS[id]; return `<button class="card" data-val="${id}"><small class="lbl">Off-hand</small><h3>${sh.name}</h3><p>${sh.desc}</p><div class="trait">${sh.trait}</div></button>`; }).join('');
+    const cards = ids.map((id) => { const sh = BD.SHIELDS[id]; return `<button class="card" data-val="${id}"><small class="lbl">Off-hand</small><div class="ico">${BD.Guide.shieldIcon(sh.id, 52)}</div><h3>${sh.name}</h3><p>${sh.desc}</p><div class="trait">${sh.trait}</div></button>`; }).join('');
     return ask(`<h2>Fight ${i + 1} of ${G.fights.length} · Off-hand</h2>
       <div class="vs"><b>${esc(foe.name)}</b> carries a ${BD.WEAPONS[foe.weapon].name} and ${foe.shield === 'none' ? 'no shield' : 'a ' + BD.SHIELDS[foe.shield].name}.<br>You hold a ${w.name}.</div>
       <p>Shield or no shield? A shield guards, going without hits harder.</p><div class="cards">${cards}</div>`);
@@ -346,7 +369,8 @@
     const fa = BD.makeFighter({ name: 'You', weapon: 'katana', color: ME.color }), fb = BD.makeFighter({ name: 'Ryuga', weapon: 'katana', color: '#ff2d95' });
     G.scene.setFighters(fa, fb); G.scene.setHud('a', fa, 0); G.scene.setHud('b', fb, 0); G.scene.syncHudInstant();
 
-    const bT = $('#btn-theme'), bS = $('#btn-sound'), bV = $('#btn-speed');
+    const bT = $('#btn-theme'), bS = $('#btn-sound'), bV = $('#btn-speed'), bH = $('#btn-help');
+    bH.onclick = async () => { panel.pause(); BD.Audio.unlock(); await BD.Guide.open({ final: 'Back to the duel', focus: false }); store.set('seen', '1'); panel.resume(); };
     bT.onclick = () => applyTheme(G.theme === 'neon' ? 'primal' : 'neon');
     const syncSound = () => { bS.textContent = BD.Audio.muted ? 'Sound: off' : 'Sound: on'; bS.setAttribute('aria-pressed', String(!BD.Audio.muted)); };
     bS.onclick = () => { BD.Audio.muted = !BD.Audio.muted; store.set('mute', BD.Audio.muted ? '1' : '0'); syncSound(); BD.Audio.unlock(); };

@@ -11,7 +11,7 @@ const body = html.slice(html.indexOf('<div id="app">'), html.indexOf('<script sr
 const css = read('style.css').replace('body { min-height: 100vh;', 'body { min-height: 100%;');
 // the service worker only makes sense when the game is served as its own site
 const noSw = (src) => src.replace(/ {2}\/\/ installable web app[\s\S]*?\/\* no service worker \*\/ \}\n/, '');
-const js = ['core.js', 'ai.js', 'audio.js', 'render.js', 'main.js'].map((f) => `/* ${f} */\n` + noSw(read(f)).replace(/<\/script/gi, '<\\/script')).join('\n');
+const js = ['core.js', 'ai.js', 'audio.js', 'render.js', 'guide.js', 'main.js'].map((f) => `/* ${f} */\n` + noSw(read(f)).replace(/<\/script/gi, '<\\/script')).join('\n');
 
 const out = `<title>Blade Duels</title>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Orbitron:wght@700;800&display=swap" rel="stylesheet">

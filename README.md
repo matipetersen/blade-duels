@@ -8,6 +8,13 @@ A gauntlet of 6 fights against rivals from level 1 to level 5, each fight best o
 
 Open `index.html` in a browser (or run `python3 -m http.server` inside this folder).
 
+## How to play (in-game guide)
+
+The game opens an illustrated, 7-page guide the first time you start a tournament (skippable), and you can reopen it any
+time with **How to play**: on the title screen, or the chip in the top bar during a fight. Opening it mid-turn
+**pauses the 3-second clock**. Navigate with the buttons, the dots, swipe left/right, or the arrow keys; `Esc` closes it.
+The illustrations are inline SVG (`guide.js`) and follow the Neon / Primal theme.
+
 ## Rules
 
 Every turn you pick **in secret** three things, and so does the bot. Then the picks are revealed and resolved at once:
@@ -121,9 +128,11 @@ The icons are generated from one SVG: `node tools/make-icons.js` (needs Playwrig
 |---|---|
 | `core.js` | Pure rules (no DOM): combo tree, `step()` that returns events |
 | `ai.js` | Bot: models your habits and simulates candidates with the same `step()`. It cannot see your move |
+| `guide.js` | Illustrated how-to-play guide (inline SVG pages) and the shield icons |
 | `render.js` | First-person camera, procedural mannequin with persistent wounds, fluids and splatter, **Neon** and **Primal** skins, hitstop, shake and blur |
 | `audio.js` | Sound effects synthesized with WebAudio |
 | `main.js`, `index.html`, `style.css` | Tournament flow and interface |
+| `tools/build-artifact.js` | Bundles the whole game into one self-contained HTML file (for a claude.ai Artifact) |
 | `manifest.webmanifest`, `sw.js`, `icons/`, `tools/make-icons.js` | Installable web app: manifest, service worker, icon set and its generator |
 | `tests/sim.js` | Rules tests and a bot-vs-bot balance simulation |
 
