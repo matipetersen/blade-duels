@@ -2,7 +2,7 @@
 
 A first-person blade duel tournament that runs in the browser (HTML5 canvas, no dependencies, no build step).
 A gauntlet of 6 fights against rivals from level 1 to level 5, each fight best of 3 rounds. Win all six to be champion.
-16 weapons: before every fight you are dealt a random weapon and so is your rival (one shuffled deck per run, so no weapon repeats).
+16 weapons: before every fight you see your rival's weapon and choose 1 of 3 offered (no weapon repeats within a run). Each rival draws from an arsenal that suits their style.
 
 ## Play
 

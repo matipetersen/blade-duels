@@ -11,14 +11,14 @@
 
   const TURN_MS = 3000;
   const ME = { name: 'You', title: 'Contender', color: '#19e6ff' };
-  // Six rivals, weakest to strongest. Weapons are not fixed: every fight draws them from the whole arsenal.
+  // Six rivals, weakest to strongest. Each one fights with a random weapon from its own arsenal (matching its style).
   const ROSTER = [
-    { name: 'Taro', title: 'The Apprentice', level: 1, persona: 'balanced', color: '#7cff6b', taunt: 'My first tournament... don\'t underestimate me!' },
-    { name: 'Hana', title: 'The Heron', level: 2, persona: 'trickster', color: '#ff9f1c', taunt: 'Are you sure you saw where my blade was going?' },
-    { name: 'Gorm', title: 'The Anvil', level: 3, persona: 'brute', color: '#ff3b30', taunt: 'I will split your guard in two.' },
-    { name: 'Madame Kuro', title: 'The Widow', level: 4, persona: 'turtle', color: '#bf5af2', perks: ['guard'], taunt: 'Patience... I always win by waiting.' },
-    { name: 'Ren', title: 'Silent Wall', level: 4, persona: 'balanced', color: '#30d158', perks: ['armor'], taunt: '...' },
-    { name: 'Ryuga', title: 'The Champion', level: 5, persona: 'aggressive', color: '#ff2d95', perks: ['edge', 'lungs'], taunt: 'Three years undefeated. Show me something new.' },
+    { name: 'Taro', title: 'The Apprentice', level: 1, persona: 'balanced', arsenal: ['katana', 'sabre', 'staff', 'spear'], color: '#7cff6b', taunt: 'My first tournament... don\'t underestimate me!' },
+    { name: 'Hana', title: 'The Heron', level: 2, persona: 'trickster', arsenal: ['rapier', 'whip', 'dagger', 'sai'], color: '#ff9f1c', taunt: 'Are you sure you saw where my blade was going?' },
+    { name: 'Gorm', title: 'The Anvil', level: 3, persona: 'brute', arsenal: ['axe', 'greatsword', 'hammer', 'flail'], color: '#ff3b30', taunt: 'I will split your guard in two.' },
+    { name: 'Madame Kuro', title: 'The Widow', level: 4, persona: 'turtle', arsenal: ['gladius', 'staff', 'halberd', 'spear'], color: '#bf5af2', perks: ['guard'], taunt: 'Patience... I always win by waiting.' },
+    { name: 'Ren', title: 'Silent Wall', level: 4, persona: 'duelist', arsenal: ['rapier', 'spear', 'katana', 'sai'], color: '#30d158', perks: ['armor'], taunt: '...' },
+    { name: 'Ryuga', title: 'The Champion', level: 5, persona: 'aggressive', arsenal: ['nunchaku', 'scythe', 'greatsword', 'dagger', 'katana'], color: '#ff2d95', perks: ['edge', 'lungs'], taunt: 'Three years undefeated. Show me something new.' },
   ];
   const FIGHT_NAMES = ['First Duel', 'Second Duel', 'Third Duel', 'Fourth Duel', 'Semifinal', 'Grand Final'];
   const G = {
@@ -188,9 +188,17 @@
   };
 
   // ---------- screens ----------
-  const WEAPON_STATS = (w) => `${w.hp} health · Quick ×${w.dmg.quick} · Heavy ×${w.dmg.heavy} · Thrust ×${w.dmg.thrust}`;
-  const weaponCard = (w, label, cls) => `<div class="card static ${cls || ''}"><small class="lbl">${label}</small><h3>${w.name}</h3><p>${w.desc}</p>` +
-    `<div class="trait">${w.trait}</div><div class="stats">${WEAPON_STATS(w)}</div></div>`;
+  const fx = (n) => (+n.toFixed(2)).toString();
+  const WEAPON_STATS = (w) => {
+    const rows = [`${w.hp} health · +${w.regen} recovery · ${w.st} stamina`,
+      `Quick ×${fx(w.dmg.quick)} · Heavy ×${fx(w.dmg.heavy)} · Thrust ×${fx(w.dmg.thrust)}`,
+      `Cost: Quick ×${fx(w.cost.quick)} · Heavy ×${fx(w.cost.heavy)} · Thrust ×${fx(w.cost.thrust)} · Feint ×${fx(w.cost.feint)}`];
+    if (w.zoneMult) rows.push(`Direction: High ×${w.zoneMult[0]} · Mid ×${w.zoneMult[1]} · Low ×${w.zoneMult[2]}`);
+    return rows.join('<br>');
+  };
+  const weaponBody = (w, label) => `<small class="lbl">${label}</small><h3>${w.name}</h3><p>${w.desc}</p>` +
+    `<div class="trait">${w.trait}</div><div class="stats">${WEAPON_STATS(w)}</div>`;
+  const weaponCard = (w, label, cls) => `<div class="card static ${cls || ''}">${weaponBody(w, label)}</div>`;
 
   async function titleScreen() {
     const rules = `<div class="legend">
@@ -198,7 +206,7 @@
       <b>Quick</b> interrupts Heavy · <b>Heavy</b> breaks the guard · <b>Feint</b> opens up whoever blocks · <b>Thrust</b> punishes the Feint.<br>
       Chaining attacks builds <b>combos</b> with more damage, but the tree narrows: on the 3rd move only the finisher is left, and a Quick/Thrust blocked in a long streak is a <b>parry</b>.<br>
       <b>You get 3 seconds per turn:</b> the faster you pick, the harder your attack hits (×0.8 to ×1.3) and the better your block holds (very fast = perfect block). If time runs out, the rest is filled in at random with no bonus. Everything costs <b>stamina</b>. You win a round by KO or by having more health at turn 14. Best of 3 rounds per fight.<br>
-      <b>The arsenal:</b> ${BD.WEAPON_IDS.length} weapons. Before every fight you are dealt a different weapon, and so is your rival. Adapt your game to what you are holding.</div>`;
+      <b>The arsenal:</b> ${BD.WEAPON_IDS.length} weapons. Before every fight you choose 1 of 3 weapons (no repeats in a run), after seeing the one your rival carries. Each rival fights with weapons that suit their style.</div>`;
     await ask(`<h2>Blade Duels</h2><p>Supreme Blade Tournament · ${ROSTER.length} fights to glory</p>${rules}
       <div><button class="cta" data-val="go">Enter the tournament</button></div>`);
   }
@@ -221,6 +229,16 @@
       <div class="vs"><b>${esc(ME.name)} vs ${esc(foe.name)}</b> — ${esc(foe.title)}<br>level ${stars(foe.level)}<br><span class="taunt">“${esc(foe.taunt)}”</span></div>
       <div class="cards duo">${weaponCard(BD.WEAPONS[f.weapon], 'Your weapon', 'mine')}${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs')}</div>${perks}
       <button class="cta" data-val="fight">Fight!</button>`);
+  }
+
+  // Before every fight: three weapons you have not used yet, and you see the rival's weapon first.
+  async function weaponScreen(i, options) {
+    const f = G.fights[i], foe = f.foe;
+    const cards = options.map((id) => `<button class="card" data-val="${id}">${weaponBody(BD.WEAPONS[id], 'Pick')}</button>`).join('');
+    return ask(`<h2>Fight ${i + 1} of ${G.fights.length} · Choose your weapon</h2>${ladderHtml(i)}
+      <div class="vs"><b>${esc(foe.name)}</b> — ${esc(foe.title)}<br>carries:</div>
+      <div class="cards duo">${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs')}</div>
+      <p>Pick the weapon that counters it.</p><div class="cards">${cards}</div>`);
   }
 
   async function perkScreen() {
@@ -276,18 +294,20 @@
   // ---------- tournament ----------
   const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-  // Every fight deals a weapon to you and one to the rival. Drawn from one shuffled deck, so within a run
-  // no weapon shows up twice.
+  const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  // Each rival fights with a weapon from its own arsenal. Yours is chosen before the fight (see weaponScreen).
   function dealFights() {
-    const deck = shuffle(BD.WEAPON_IDS), n = ROSTER.length;
-    return ROSTER.map((r, i) => ({ foe: Object.assign({}, r, { weapon: deck[n + i] }), weapon: deck[i], won: null }));
+    return ROSTER.map((r) => ({ foe: Object.assign({}, r, { weapon: pickOne(r.arsenal) }), weapon: null, won: null }));
   }
 
   async function tournament() {
     G.perks = [];
     G.fights = dealFights();
+    const unused = new Set(BD.WEAPON_IDS);
     for (let i = 0; i < G.fights.length; i++) {
       const f = G.fights[i];
+      f.weapon = await weaponScreen(i, shuffle(Array.from(unused)).slice(0, 3));
+      unused.delete(f.weapon);
       G.weapon = f.weapon;
       await fightScreen(i);
       f.won = await playMatch(f.foe);
