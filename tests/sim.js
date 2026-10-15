@@ -203,6 +203,10 @@ function batch(label, wa, la, pa, wb, lb, pb, n) {
   assert.ok(leakOf('none') > 0 && leakOf('kite') === 0);
   const perfectOf = (id) => { const z = duelOf(sh('kite'), sh(id)); z.a.chain = [{ type: 'quick', zone: 0 }]; return BD.step(z, { a: dm('quick', 1, 0), b: { type: 'rest', zone: -1, block: 1, pb: 0.75 } }).out.a.perfect; };
   assert.strictEqual(perfectOf('buckler'), true); assert.strictEqual(perfectOf('kite'), false);
+  // Steady Guard perk: free blocks, or -5% damage taken when blocks were already free
+  const gp = (wp, shd) => mk(wp, 3, 'balanced', ['guard'], shd);
+  assert.strictEqual(gp('katana', 'kite').mods.blockFree, true);
+  assert.ok(gp('katana', 'tower').mods.armor < BD.SHIELDS.tower.armor);
   console.log('shields OK');
 })();
 

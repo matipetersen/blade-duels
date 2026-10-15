@@ -368,6 +368,7 @@
         P.bx += wob(ph * 0.55 + 4) * 7 * amp; P.by += wob(ph * 0.6 + 5) * 12 * amp * ag;
         P.lean += wob(ph * 0.6 + 6) * 1.6 * amp; P.sink += (Math.sin(ph * 1.5) * 0.5 + 0.5) * 3.5 * amp;
       }
+      if (this.eShield === 'none') P.hx += 30; // both hands on the weapon: it sits closer to the body
       P.fy = FEET + (P.sc - 1) * 150 + P.y;
       return P;
     }
@@ -903,11 +904,14 @@
       this.drawWoundsPart(ctx, st, P, 'legs');
       // upper body (leans over the hips)
       ctx.save(); ctx.translate(0, -110); ctx.rotate(P.lean * D2R); ctx.translate(0, 110);
-      // buckler arm
-      const S2 = { x: 44, y: -204 }, A2 = ik(S2.x, S2.y, P.bx + 10, P.by + 8, 54, 50, 1);
-      thick(ctx, st, [S2, A2.el, A2.hd], 13, col, skin);
-      shieldShape(ctx, st, this.eShield, P.bx, P.by, 48 * P.bs, col, this.eF.broken, skin);
-      if (this.eF.broken && !sil && this.eShield !== 'none') { ctx.strokeStyle = neon ? '#ff1744' : '#0b0b0b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(P.bx - 30, P.by - 26); ctx.lineTo(P.bx - 4, P.by + 4); ctx.lineTo(P.bx - 18, P.by + 34); ctx.moveTo(P.bx - 4, P.by + 4); ctx.lineTo(P.bx + 30, P.by + 8); ctx.stroke(); }
+      // off arm: holds the shield, or (no shield) grips the weapon with both hands (drawn with the weapon below)
+      const S2 = { x: 44, y: -204 }, twoHand = this.eShield === 'none';
+      let A2 = ik(S2.x, S2.y, P.bx + 10, P.by + 8, 54, 50, 1);
+      if (!twoHand) {
+        thick(ctx, st, [S2, A2.el, A2.hd], 13, col, skin);
+        shieldShape(ctx, st, this.eShield, P.bx, P.by, 48 * P.bs, col, this.eF.broken, skin);
+      }
+      if (this.eF.broken && !sil && !twoHand) { ctx.strokeStyle = neon ? '#ff1744' : '#0b0b0b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(P.bx - 30, P.by - 26); ctx.lineTo(P.bx - 4, P.by + 4); ctx.lineTo(P.bx - 18, P.by + 34); ctx.moveTo(P.bx - 4, P.by + 4); ctx.lineTo(P.bx + 30, P.by + 8); ctx.stroke(); }
       // torso
       ctx.beginPath(); ctx.moveTo(-44, -208); ctx.lineTo(44, -208); ctx.lineTo(30, -130); ctx.lineTo(-30, -130); ctx.closePath(); paint(ctx, st, { col, pfill: skin });
       if (!sil) {
@@ -938,6 +942,12 @@
       thick(ctx, st, [S1, A1.el, A1.hd], 13, col, skin);
       weaponShape(ctx, st, wep.shape, A1.hd.x, A1.hd.y, P.w, wlen, wthk, col);
       ctx.beginPath(); ctx.arc(A1.hd.x, A1.hd.y, 10, 0, 6.283); paint(ctx, st, { col, pfill: skin, pw: 4 });
+      if (twoHand) { // second hand a little further up the shaft
+        const ga = P.w * D2R, g = Math.min(wlen * 0.3, 70);
+        A2 = ik(S2.x, S2.y, A1.hd.x + Math.cos(ga) * g, A1.hd.y + Math.sin(ga) * g, 54, 50, 1);
+        thick(ctx, st, [S2, A2.el, A2.hd], 13, col, skin);
+        ctx.beginPath(); ctx.arc(A2.hd.x, A2.hd.y, 10, 0, 6.283); paint(ctx, st, { col, pfill: skin, pw: 4 });
+      }
       [[S1.x, S1.y], [S2.x, S2.y], [A1.el.x, A1.el.y], [A2.el.x, A2.el.y]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 8, 0, 6.283); paint(ctx, st, { col, pfill: skin, pw: 3 }); });
       if (this.eF.dizzy) this.drawStars(ctx, { x: 0, y: -262 }, neon);
       ctx.restore();
@@ -994,14 +1004,19 @@
       const skin = shade('#e8b88a', -Math.round(d * 40)), sleeve = neon ? '#0d0822' : shade(col, -60);
       // left hand + buckler (behind the weapon)
       const bx = p.bx + jx, by = p.by + jy, br = 84 * p.bs;
-      capsule(ctx, { x: bx - 40, y: by + 70 }, { x: -60, y: H + 140 }, 110, 160); paint(ctx, st, { nfill: sleeve, col, w: 3, pfill: sleeve });
-      shieldShape(ctx, st, this.pShield, bx, by, br, col, this.pF.broken, skin);
-      if (this.pF.broken && !st.sil && this.pShield !== 'none') { ctx.strokeStyle = neon ? '#ff1744' : '#0b0b0b'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(bx - br * 0.7, by - br * 0.5); ctx.lineTo(bx - br * 0.1, by + 6); ctx.lineTo(bx - br * 0.4, by + br * 0.7); ctx.moveTo(bx - br * 0.1, by + 6); ctx.lineTo(bx + br * 0.7, by + br * 0.1); ctx.stroke(); }
+      const twoHand = this.pShield === 'none', pa = p.a * D2R;
+      // no shield: the left hand grips the weapon next to the right one
+      const gd = ['staff', 'scythe', 'halberd', 'spear', 'hammer'].includes(wep.shape) ? 95 : -42; // up a pole, or behind the guard of a blade
+      const lx = twoHand ? hx + Math.cos(pa) * gd : bx, ly = twoHand ? hy + Math.sin(pa) * gd : by;
+      capsule(ctx, { x: lx - 40, y: ly + 70 }, { x: -60, y: H + 140 }, 110, 160); paint(ctx, st, { nfill: sleeve, col, w: 3, pfill: sleeve });
+      if (!twoHand) shieldShape(ctx, st, this.pShield, bx, by, br, col, this.pF.broken, skin);
+      if (this.pF.broken && !st.sil && !twoHand) { ctx.strokeStyle = neon ? '#ff1744' : '#0b0b0b'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(bx - br * 0.7, by - br * 0.5); ctx.lineTo(bx - br * 0.1, by + 6); ctx.lineTo(bx - br * 0.4, by + br * 0.7); ctx.moveTo(bx - br * 0.1, by + 6); ctx.lineTo(bx + br * 0.7, by + br * 0.1); ctx.stroke(); }
       // weapon and right hand
       weaponShape(ctx, st, wep.shape, hx, hy, p.a, L, th, col);
       const vx = 1020 - hx, vy = 640 - hy, vd = Math.hypot(vx, vy) || 1;
       capsule(ctx, { x: hx + (vx / vd) * 20, y: hy + (vy / vd) * 20 }, { x: 1020, y: 640 }, 76, 150); paint(ctx, st, { nfill: sleeve, col, w: 3, pfill: sleeve });
       ctx.beginPath(); ctx.arc(hx, hy, 38, 0, 6.283); paint(ctx, st, { col, w: 3, pfill: skin });
+      if (twoHand) { ctx.beginPath(); ctx.arc(lx, ly, 36, 0, 6.283); paint(ctx, st, { col, w: 3, pfill: skin }); }
       if (!st.sil) { ctx.strokeStyle = neon ? col : '#0b0b0b'; ctx.lineWidth = neon ? 1.5 : 3; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.arc(hx + i * 2, hy + 8 + i * 12, 22, 3.6, 5.6); ctx.stroke(); } }
     }
 

@@ -138,7 +138,7 @@
     { id: 'lungs', name: 'Steel Lungs', desc: '+3 recovery and +10 stamina', apply: (m) => { m.regen += 3; m.st += 10; } },
     { id: 'edge', name: 'Sharpened Edge', desc: '+12% damage', apply: (m) => { m.dmgMult *= 1.12; } },
     { id: 'armor', name: 'Light Armor', desc: '-10% damage taken', apply: (m) => { m.armor *= 0.9; } },
-    { id: 'guard', name: 'Steady Guard', desc: 'Blocking costs no stamina', apply: (m) => { m.blockFree = true; } },
+    { id: 'guard', name: 'Steady Guard', desc: 'Blocking costs no stamina (if it already does: -5% damage taken)', apply: (m) => { if (m.blockFree) m.armor *= 0.95; else m.blockFree = true; } },
     { id: 'combo', name: 'Combo Master', desc: 'Combos hit much harder', apply: (m) => { m.comboBoost += 0.5; } },
     { id: 'reader', name: 'Hawk Eye', desc: 'See your rival\'s habits', apply: (m) => { m.reader = true; } },
   ];

@@ -369,5 +369,5 @@
   } catch (e) { /* no service worker */ }
 
   window.BDGame = { G, panel, scene: () => G.scene };
-  window.addEventListener('DOMContentLoaded', main);
+  if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', main); else main();
 })();
