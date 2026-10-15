@@ -9,7 +9,9 @@ const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
 const html = read('index.html');
 const body = html.slice(html.indexOf('<div id="app">'), html.indexOf('<script src="core.js">')).trim();
 const css = read('style.css').replace('body { min-height: 100vh;', 'body { min-height: 100%;');
-const js = ['core.js', 'ai.js', 'audio.js', 'render.js', 'main.js'].map((f) => `/* ${f} */\n` + read(f).replace(/<\/script/gi, '<\\/script')).join('\n');
+// the service worker only makes sense when the game is served as its own site
+const noSw = (src) => src.replace(/ {2}\/\/ installable web app[\s\S]*?\/\* no service worker \*\/ \}\n/, '');
+const js = ['core.js', 'ai.js', 'audio.js', 'render.js', 'main.js'].map((f) => `/* ${f} */\n` + noSw(read(f)).replace(/<\/script/gi, '<\\/script')).join('\n');
 
 const out = `<title>Blade Duels</title>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Orbitron:wght@700;800&display=swap" rel="stylesheet">
