@@ -62,7 +62,7 @@
   //   gbMult        guard-break damage and stamina drain multiplier
   //   noInterrupt   a Heavy is not cut off by a Quick
   //   punishMult    damage of a Thrust that punishes a Feint (default 1.5)
-  //   parryAt       streak length at which a blocked Quick/Thrust becomes a parry (default 2)
+  //   parryAt       streak length at which a Quick/Thrust the rival throws into YOUR block becomes a parry (default 2)
   //   perfectAt     decision speed that makes a block perfect (default 0.8)
   //   restBonus     extra stamina recovered when resting (default 14)
   //   comboBoost    added to the combo damage boost
@@ -74,57 +74,88 @@
     katana: W('katana', 'Katana', 'Balanced', 'Balanced. No weak spots.',
       { dmg: D(1, 1, 1), cost: C(1, 1, 1, 1), hp: 106, st: 100, regen: 8, len: 84, shape: 'blade' }),
     dagger: W('dagger', 'Dagger', 'Cheap quick strikes', 'Cheap, deadly quick strikes. Weak heavy. Low health.',
-      { dmg: D(1.6, 0.75, 1.05), cost: C(0.65, 1, 1, 0.8), hp: 94, st: 100, regen: 9, len: 46, shape: 'dagger' }),
+      { dmg: D(1.6, 0.75, 1.05), cost: C(0.65, 1, 1, 0.8), hp: 98, st: 100, regen: 9, len: 46, shape: 'dagger' }),
     spear: W('spear', 'Spear', 'Cheap, strong thrusts', 'Devastating, cheap thrusts. Weak quick strikes.',
-      { dmg: D(0.85, 0.9, 1.3), cost: C(1, 1, 0.9, 1), hp: 100, st: 100, regen: 8, len: 138, shape: 'spear' }),
+      { dmg: D(0.85, 0.9, 1.25), cost: C(1, 1, 0.9, 1), hp: 100, st: 100, regen: 8, len: 138, shape: 'spear' }),
     axe: W('axe', 'Axe', 'Brutal heavies', 'Brutal heavy strikes and lots of health. Tires quickly.',
       { dmg: D(0.8, 1.28, 0.9), cost: C(1.1, 1, 1.1, 1.1), hp: 108, st: 100, regen: 7, len: 76, shape: 'axe' }),
     rapier: W('rapier', 'Rapier', 'Feints cost half · Feint punish ×2', 'A duelist\'s needle: cheap feints and a vicious punish, but fragile and weak on heavy blows.',
       { dmg: D(1.05, 0.65, 1.3), cost: C(0.9, 1.1, 0.85, 0.5), punishMult: 2.0, hp: 98, st: 100, regen: 8, len: 112, shape: 'rapier' }),
     greatsword: W('greatsword', 'Greatsword', 'Guard breaks hit ×1.5', 'Huge swings that shatter guards. Slow, tiring and poor at quick strikes.',
-      { dmg: D(0.7, 1.35, 0.85), cost: C(1.2, 1.1, 1.1, 1.2), gbMult: 1.5, hp: 106, st: 95, regen: 7, len: 120, shape: 'greatsword' }),
+      { dmg: D(0.8, 1.35, 0.85), cost: C(1.2, 1.1, 1.1, 1.2), gbMult: 1.5, hp: 112, st: 95, regen: 7, len: 120, shape: 'greatsword', twoHanded: true }),
     hammer: W('hammer', 'War Hammer', 'Guard breaks drain ×2 stamina', 'Crushes shields: a guard break also drains a lot of the rival\'s stamina. Clumsy otherwise.',
       { dmg: D(0.75, 1.2, 0.7), cost: C(1.1, 1.05, 1.1, 1.1), gbMult: 2.0, hp: 104, st: 100, regen: 7, len: 90, shape: 'hammer' }),
-    flail: W('flail', 'Flail', 'Heavy cannot be interrupted · Blocks leak 20%', 'The ball swings around the guard: Quick cannot cut off your Heavy and every block leaks a little.',
-      { dmg: D(0.8, 1.1, 0.7), cost: C(1.05, 1.1, 1.1, 1.1), noInterrupt: true, blockChip: 0.2, hp: 100, st: 100, regen: 8, len: 100, shape: 'flail' }),
+    flail: W('flail', 'Flail', 'Heavy cannot be interrupted · Blocks leak 15%', 'The ball swings around the guard: Quick cannot cut off your Heavy and every block leaks a little.',
+      { dmg: D(0.8, 1.1, 0.7), cost: C(1.05, 1.1, 1.1, 1.1), noInterrupt: true, blockChip: 0.15, hp: 100, st: 100, regen: 8, len: 100, shape: 'flail' }),
     sabre: W('sabre', 'Sabre', 'Tireless: +2 recovery', 'Fast curved cuts and good wind, but poor thrusts.',
-      { dmg: D(1.25, 1.1, 0.75), cost: C(0.85, 1, 1.1, 1), hp: 100, st: 100, regen: 10, len: 90, shape: 'sabre' }),
-    sai: W('sai', 'Sai', 'Parries from streak 1 · Perfect block at 0.7', 'Trapping forks: a blocked Quick or Thrust is already a parry after a single move. Little damage on heavy blows.',
-      { dmg: D(1.35, 0.8, 1.1), cost: C(0.8, 1.05, 1, 0.9), parryAt: 1, perfectAt: 0.7, hp: 100, st: 100, regen: 8, len: 52, shape: 'sai' }),
+      { dmg: D(1.25, 1.1, 0.8), cost: C(0.85, 1, 1.1, 1), hp: 101, st: 100, regen: 10, len: 90, shape: 'sabre' }),
+    sai: W('sai', 'Sai', 'Parries from streak 1', 'Trapping forks: when you block a Quick or Thrust it is already a parry after a single move. Little damage on heavy blows.',
+      { dmg: D(1.25, 0.8, 1.1), cost: C(0.8, 1.05, 1, 0.9), parryAt: 1, hp: 100, st: 100, regen: 8, len: 52, shape: 'sai' }),
     nunchaku: W('nunchaku', 'Nunchaku', 'Combos hit +50% harder', 'Whirling chains: very cheap, very fast, a combo machine. Poor thrust and low health.',
       { dmg: D(1.4, 0.95, 0.85), cost: C(0.8, 1.05, 1.1, 0.9), comboBoost: 0.5, hp: 100, st: 100, regen: 8, len: 70, shape: 'nunchaku' }),
     staff: W('staff', 'Bo Staff', 'Rest recovers +6 stamina · Perfect block at 0.7', 'A monk\'s staff: endurance and a sturdy guard, nothing flashy.',
-      { dmg: D(1.05, 0.9, 0.9), cost: C(1, 1, 1, 1), restBonus: 6, perfectAt: 0.7, hp: 104, st: 100, regen: 10, len: 130, shape: 'staff' }),
+      { dmg: D(1.05, 0.9, 0.95), cost: C(1, 1, 1, 1), restBonus: 6, perfectAt: 0.7, hp: 106, st: 100, regen: 10, len: 130, shape: 'staff', twoHanded: true }),
     scythe: W('scythe', 'Scythe', 'Low attacks ×1.35 · High ×0.85', 'Reaps the legs: low strikes hit far harder, high ones barely scratch.',
-      { dmg: D(1.05, 1.2, 0.8), zoneMult: [0.85, 1, 1.35], cost: C(1, 1, 1.1, 1), hp: 102, st: 100, regen: 8, len: 128, shape: 'scythe' }),
+      { dmg: D(1.05, 1.2, 0.8), zoneMult: [0.85, 1, 1.35], cost: C(1, 1, 1.1, 1), hp: 107, st: 100, regen: 8, len: 128, shape: 'scythe', twoHanded: true }),
     halberd: W('halberd', 'Halberd', 'High attacks ×1.3 · Low ×0.85', 'A long pole with axe and spike: strong overhead, poor against the legs. Clumsy quick strikes.',
-      { dmg: D(0.65, 1.1, 1.05), zoneMult: [1.25, 1, 0.85], cost: C(1.15, 1.05, 0.95, 1.1), hp: 100, st: 100, regen: 7, len: 150, shape: 'halberd' }),
+      { dmg: D(0.75, 1.1, 1.05), zoneMult: [1.25, 1, 0.85], cost: C(1.1, 1.05, 0.95, 1.05), hp: 110, st: 100, regen: 7, len: 150, shape: 'halberd', twoHanded: true }),
     whip: W('whip', 'Whip', 'Blocks leak 25% · Cheap feints', 'Wraps around the guard: even a correct block lets some damage through. Fragile, and weak when it must hit hard.',
-      { dmg: D(1.35, 0.8, 0.95), cost: C(0.75, 1.1, 1, 0.6), blockChip: 0.25, hp: 96, st: 100, regen: 9, len: 135, shape: 'whip' }),
+      { dmg: D(1.35, 0.85, 0.95), cost: C(0.75, 1.1, 1, 0.6), blockChip: 0.25, hp: 98, st: 100, regen: 9, len: 135, shape: 'whip' }),
     gladius: W('gladius', 'Sword & Board', 'Free blocks · -8% damage taken · Perfect block at 0.7', 'A short sword behind a heavy shield: blocking is free and sturdy, but you hit softly.',
       { dmg: D(0.85, 0.85, 0.85), cost: C(1, 1, 1, 1), blockFree: true, armor: 0.92, perfectAt: 0.7, hp: 108, st: 100, regen: 7, len: 60, shape: 'gladius' }),
   };
   const WEAPON_IDS = Object.keys(WEAPONS);
+
+  // Off-hand: a shield, or none (two-handing the weapon). Two-handed weapons (twoHanded) cannot take a shield.
+  // Fields (all optional, all defender/self side):
+  //   dmgMult  multiplies the damage you deal      costMult  multiplies the stamina cost of attacks
+  //   armor    damage taken multiplier             blockFree blocking costs no stamina
+  //   leak     extra share of damage that leaks through a correct block
+  //   gbTaken  guard-break damage and stamina drain you suffer (multiplier)
+  //   parryAt  streak length at which a Quick/Thrust the rival throws into your block becomes a parry
+  //   perfectAt decision speed that makes your block perfect   reflect  flat damage a blocked attacker takes
+  //   regen    added stamina recovery
+  const S = (id, name, trait, desc, o) => Object.assign({ id, name, trait, desc }, o);
+  const SHIELDS = {
+    kite: S('kite', 'Heater Shield', '-5% damage taken', 'A sturdy all-round shield. No weak spots, no tricks.', { armor: 0.95 }),
+    buckler: S('buckler', 'Buckler', 'Perfect block at 0.7 · +2 recovery · You hit ×1.05 · Guard breaks hurt ×1.15',
+      'Small and quick: easy to time a perfect block and light on the arm, but a Heavy folds it.', { perfectAt: 0.7, regen: 2, dmgMult: 1.05, gbTaken: 1.15 }),
+    tower: S('tower', 'Tower Shield', 'Free blocks · -8% damage taken · Guard breaks hurt ×0.5',
+      'A wall of iron. You are nearly unbreakable, but it is heavy: attacks cost +12% stamina, you hit ×0.9 and recover 1 less.',
+      { blockFree: true, armor: 0.92, gbTaken: 0.5, costMult: 1.12, dmgMult: 0.9, regen: -1 }),
+    spiked: S('spiked', 'Spiked Shield', 'Blocked attackers take 2 damage',
+      'Studded with iron: every attack the rival throws into your guard costs them blood. A little heavy, you hit ×0.95.', { reflect: 2, dmgMult: 0.95 }),
+    none: S('none', 'No Shield', 'Two-handed: +12% damage · Blocks leak 12% · Guard breaks hurt ×1.25',
+      'Both hands on the weapon. More bite, but your guard is just the blade.', { dmgMult: 1.12, leak: 0.12, gbTaken: 1.25 }),
+  };
+  const SHIELD_IDS = Object.keys(SHIELDS);
+  const DEFAULT_SHIELD = 'kite';
+  // two-handed weapons are always held with both hands; anything else may take any shield or none
+  const legalShields = (weaponId) => ((WEAPONS[weaponId] || {}).twoHanded ? ['none'] : SHIELD_IDS.slice());
 
   const PERKS = [
     { id: 'hp', name: 'Heart of Stone', desc: '+15 max health', apply: (m) => { m.hp += 15; } },
     { id: 'lungs', name: 'Steel Lungs', desc: '+3 recovery and +10 stamina', apply: (m) => { m.regen += 3; m.st += 10; } },
     { id: 'edge', name: 'Sharpened Edge', desc: '+12% damage', apply: (m) => { m.dmgMult *= 1.12; } },
     { id: 'armor', name: 'Light Armor', desc: '-10% damage taken', apply: (m) => { m.armor *= 0.9; } },
-    { id: 'guard', name: 'Steady Guard', desc: 'Blocking costs no stamina', apply: (m) => { m.blockFree = true; } },
+    { id: 'guard', name: 'Steady Guard', desc: 'Blocking costs no stamina (if it already does: -5% damage taken)', apply: (m) => { if (m.blockFree) m.armor *= 0.95; else m.blockFree = true; } },
     { id: 'combo', name: 'Combo Master', desc: 'Combos hit much harder', apply: (m) => { m.comboBoost += 0.5; } },
     { id: 'reader', name: 'Hawk Eye', desc: 'See your rival\'s habits', apply: (m) => { m.reader = true; } },
   ];
 
   function makeFighter(spec) {
     const w = WEAPONS[spec.weapon] || WEAPONS.katana;
-    const m = { hp: 0, st: 0, regen: 0, dmgMult: 1, armor: w.armor || 1, blockFree: !!w.blockFree, comboBoost: 1 + (w.comboBoost || 0), reader: false };
+    const sid = legalShields(w.id).includes(spec.shield) ? spec.shield : legalShields(w.id)[0] === 'none' ? 'none' : DEFAULT_SHIELD;
+    const sh = SHIELDS[sid];
+    const m = { hp: 0, st: 0, regen: sh.regen || 0, dmgMult: sh.dmgMult || 1, armor: (w.armor || 1) * (sh.armor || 1), blockFree: !!(w.blockFree || sh.blockFree),
+      comboBoost: 1 + (w.comboBoost || 0), reader: false, costMult: sh.costMult || 1, leak: sh.leak || 0, gbTaken: sh.gbTaken || 1,
+      parryAt: sh.parryAt || 99, perfectAt: sh.perfectAt || 99, reflect: sh.reflect || 0 };
     (spec.perks || []).forEach((id) => {
       const p = PERKS.find((x) => x.id === id);
       if (p) p.apply(m);
     });
     const f = {
-      name: spec.name, title: spec.title || '', weapon: w.id, color: spec.color, level: spec.level || 3,
+      name: spec.name, title: spec.title || '', weapon: w.id, shield: sid, color: spec.color, level: spec.level || 3,
       persona: spec.persona || 'balanced', taunt: spec.taunt || '', perks: (spec.perks || []).slice(),
       maxHp: w.hp + m.hp, maxSt: w.st + m.st, regen: w.regen + m.regen, mods: m,
     };
@@ -152,7 +183,7 @@
   function attackCost(f, type, chainLen) {
     if (type === 'rest') return 0;
     const w = WEAPONS[f.weapon];
-    return Math.max(2, Math.round(TYPES[type].cost * (w.cost[type] || 1) * (1 + 0.2 * chainLen)));
+    return Math.max(2, Math.round(TYPES[type].cost * (w.cost[type] || 1) * f.mods.costMult * (1 + 0.2 * chainLen)));
   }
   function blockCost(f) {
     return f.mods.blockFree ? 0 : BLOCK_COST;
@@ -223,7 +254,8 @@
       const openMult = D.open ? 1.2 : 1;
       const combo = info[att].combo;
       const comboMult = combo ? 1 + (combo.mult - 1) * A.mods.comboBoost : 1;
-      const chip = WA.blockChip || 0, gb = WA.gbMult || 1;
+      const chip = (WA.blockChip || 0) + D.mods.leak, gb = (WA.gbMult || 1) * D.mods.gbTaken;
+      const DW = WEAPONS[D.weapon], parryAt = Math.min(DW.parryAt || 2, D.mods.parryAt);
       let kind, dmg = 0, counter = false;
 
       if (ma.type === 'heavy' && md.type === 'quick' && !WA.noInterrupt) {
@@ -237,13 +269,13 @@
         } else if (ma.type === 'heavy') {
           kind = 'guardbreak'; dmg = base * zm * 0.4 * gb * chipMult; stLoss[def] += Math.round(12 * gb * chipMult); flags[def].broken = true;
         } else if (ma.type === 'thrust') {
-          if (info[att].streak >= (WA.parryAt || 2)) { kind = 'parry'; flags[att].broken = true; flags[att].open = true; }
+          if (info[att].streak >= parryAt) { kind = 'parry'; flags[att].broken = true; flags[att].open = true; }
           else { kind = 'block'; dmg = base * zm * (0.35 + chip) * chipMult; flags[att].broken = true; }
         } else { // quick
-          if (info[att].streak >= (WA.parryAt || 2)) { kind = 'parry'; flags[att].broken = true; flags[att].open = true; }
+          if (info[att].streak >= parryAt) { kind = 'parry'; flags[att].broken = true; flags[att].open = true; }
           else { kind = 'block'; dmg = base * zm * chip * chipMult; }
         }
-        if (kind === 'block' && sB >= (WEAPONS[D.weapon].perfectAt || PERFECT_BLOCK)) { perfect = true; flags[att].broken = true; stLoss[att] += 5; }
+        if (kind === 'block' && sB >= Math.min(DW.perfectAt || PERFECT_BLOCK, D.mods.perfectAt, PERFECT_BLOCK)) { perfect = true; flags[att].broken = true; stLoss[att] += 5; }
       } else if (ma.type === 'feint') {
         kind = 'whiff';
       } else {
@@ -254,6 +286,7 @@
       dmg = Math.round(dmg * D.mods.armor);
       out[att] = { kind, dmg, counter, power: pw, perfect, combo: kind === 'hit' || kind === 'punish' ? combo : null };
       dmgTaken[def] += dmg;
+      if (D.mods.reflect && (kind === 'block' || kind === 'parry' || kind === 'guardbreak')) { dmgTaken[att] += D.mods.reflect; out[att].reflect = D.mods.reflect; }
     });
 
     // apply
@@ -295,7 +328,7 @@
   }
 
   Object.assign(BD, {
-    ZONES, ZONE_MULT, TYPES, TYPE_ORDER, BLOCK_COST, MAX_CHAIN, TURN_LIMIT, COMBOS, WEAPONS, PERKS, NEUTRAL_SPEED, attackPower,
+    ZONES, ZONE_MULT, TYPES, TYPE_ORDER, BLOCK_COST, MAX_CHAIN, TURN_LIMIT, COMBOS, WEAPONS, SHIELDS, SHIELD_IDS, DEFAULT_SHIELD, legalShields, PERKS, NEUTRAL_SPEED, attackPower,
     WEAPON_IDS, makeFighter, resetFighter, cloneState, newDuel, attackCost, blockCost, legalAttacks, isLegal, findCombo, step, roundOver,
   });
   if (typeof module !== 'undefined' && module.exports) module.exports = BD;

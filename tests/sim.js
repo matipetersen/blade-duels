@@ -4,7 +4,7 @@ const assert = require('assert');
 const BD = require('../core.js');
 require('../ai.js');
 
-const mk = (weapon, level, persona, perks) => BD.makeFighter({ name: weapon, weapon, level, persona, color: '#fff', perks });
+const mk = (weapon, level, persona, perks, shield) => BD.makeFighter({ name: weapon, weapon, level, persona, color: '#fff', perks, shield });
 const dm = (type, zone, block) => ({ type, zone, block });
 const fresh = (wa = 'katana', wb = 'katana') => BD.newDuel(mk(wa), mk(wb));
 
@@ -14,7 +14,7 @@ const fresh = (wa = 'katana', wb = 'katana') => BD.newDuel(mk(wa), mk(wb));
   // clean hit: Quick High vs Low block
   let r = BD.step(s, { a: dm('quick', 0, 2), b: dm('rest', -1, 2) });
   assert.strictEqual(r.out.a.kind, 'hit');
-  assert.strictEqual(s.b.hp, s.b.maxHp - Math.round(8 * 1.2));
+  assert.strictEqual(s.b.hp, s.b.maxHp - Math.round(8 * 1.2 * BD.SHIELDS.kite.armor));
 
   // correct block
   s = fresh();
@@ -149,8 +149,8 @@ function batch(label, wa, la, pa, wb, lb, pb, n) {
   // rapier: thrust punishing a feint hits harder than the spear-free baseline
   const pun = (w) => { const q = fresh(w, 'katana'); BD.step(q, { a: dm('thrust', 1, 0), b: dm('feint', 1, 0) }); return lost(q, 'b') / BD.WEAPONS[w].dmg.thrust; };
   assert.ok(pun('rapier') > pun('katana') * 1.25);
-  // sai: a blocked Quick after ONE move is already a parry
-  s = fresh('sai', 'katana'); s.a.chain = [{ type: 'quick', zone: 0 }];
+  // sai (defender): a Quick blocked after ONE move of the attacker's streak is already a parry
+  s = fresh('katana', 'sai'); s.a.chain = [{ type: 'quick', zone: 0 }];
   r = BD.step(s, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); assert.strictEqual(r.out.a.kind, 'parry');
   s = fresh('katana', 'katana'); s.a.chain = [{ type: 'quick', zone: 0 }];
   r = BD.step(s, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); assert.strictEqual(r.out.a.kind, 'block');
@@ -174,6 +174,40 @@ function batch(label, wa, la, pa, wb, lb, pb, n) {
   // every weapon only ever produces legal bot moves in a full duel against another one
   BD.WEAPON_IDS.forEach((id, i) => { const o = BD.WEAPON_IDS[(i + 5) % BD.WEAPON_IDS.length]; const r2 = duel(id, 2, 'balanced', o, 2, 'balanced', 77 + i); assert.ok(r2.rounds >= 2); });
   console.log('weapons OK');
+})();
+
+// --- shields ---
+(function shields() {
+  const sh = (id, wp = 'katana') => mk(wp, 3, 'balanced', [], id);
+  const duelOf = (a, b) => BD.newDuel(a, b);
+  const lostBy = (q, k) => q[k].maxHp - q[k].hp;
+  // two-handed weapons are forced to no shield; others fall back to the heater shield
+  assert.strictEqual(sh('tower', 'greatsword').shield, 'none');
+  assert.strictEqual(sh('bogus').shield, 'kite');
+  assert.deepStrictEqual(BD.legalShields('halberd'), ['none']);
+  assert.ok(BD.legalShields('katana').length === BD.SHIELD_IDS.length);
+  // no shield hits harder; tower shield hits softer
+  const dealt = (id) => { const q = duelOf(sh(id), sh('kite')); BD.step(q, { a: dm('quick', 1, 0), b: dm('rest', -1, 2) }); return lostBy(q, 'b'); };
+  assert.ok(dealt('none') > dealt('kite') && dealt('kite') > dealt('tower'));
+  // tower: free blocks, takes less damage, guard break hurts far less than with a buckler
+  let q = duelOf(sh('kite'), sh('tower')); q.b.st = 50; BD.step(q, { a: dm('rest', -1, 1), b: dm('rest', -1, 1) });
+  const q2 = duelOf(sh('kite'), sh('kite')); q2.b.st = 50; BD.step(q2, { a: dm('rest', -1, 1), b: dm('rest', -1, 1) });
+  assert.ok(q.b.st > q2.b.st);
+  const gb = (id) => { const z = duelOf(sh('kite'), sh(id)); BD.step(z, { a: dm('heavy', 1, 0), b: dm('rest', -1, 1) }); return lostBy(z, 'b'); };
+  assert.ok(gb('buckler') > gb('kite') && gb('kite') > gb('tower'));
+  // spiked: a blocked attacker takes reflect damage; a hit does not reflect
+  q = duelOf(sh('kite'), sh('spiked')); BD.step(q, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); assert.strictEqual(lostBy(q, 'a'), 2);
+  q = duelOf(sh('kite'), sh('spiked')); BD.step(q, { a: dm('quick', 1, 0), b: dm('rest', -1, 2) }); assert.strictEqual(lostBy(q, 'a'), 0);
+  // no shield: blocks leak; buckler: a 0.75 block is perfect
+  const leakOf = (id) => { const z = duelOf(sh('kite'), sh(id)); BD.step(z, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); return lostBy(z, 'b'); };
+  assert.ok(leakOf('none') > 0 && leakOf('kite') === 0);
+  const perfectOf = (id) => { const z = duelOf(sh('kite'), sh(id)); z.a.chain = [{ type: 'quick', zone: 0 }]; return BD.step(z, { a: dm('quick', 1, 0), b: { type: 'rest', zone: -1, block: 1, pb: 0.75 } }).out.a.perfect; };
+  assert.strictEqual(perfectOf('buckler'), true); assert.strictEqual(perfectOf('kite'), false);
+  // Steady Guard perk: free blocks, or -5% damage taken when blocks were already free
+  const gp = (wp, shd) => mk(wp, 3, 'balanced', ['guard'], shd);
+  assert.strictEqual(gp('katana', 'kite').mods.blockFree, true);
+  assert.ok(gp('katana', 'tower').mods.armor < BD.SHIELDS.tower.armor);
+  console.log('shields OK');
 })();
 
 const N = +process.argv[2] || 40;

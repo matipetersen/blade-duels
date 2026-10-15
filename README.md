@@ -2,7 +2,7 @@
 
 A first-person blade duel tournament that runs in the browser (HTML5 canvas, no dependencies, no build step).
 A gauntlet of 6 fights against rivals from level 1 to level 5, each fight best of 3 rounds. Win all six to be champion.
-16 weapons: before every fight you are dealt a random weapon and so is your rival (one shuffled deck per run, so no weapon repeats).
+16 weapons: before every fight you see your rival's weapon and choose 1 of 3 offered (no weapon repeats within a run). Each rival draws from an arsenal that suits their style.
 
 ## Play
 
@@ -54,6 +54,21 @@ lens, slashes, a red vignette with a heartbeat and a trembling hand. Condition i
 
 Keys: `Q W E R T` attack type, `1 2 3` direction, `Z X C` block.
 
+## Off-hand: shields (Elden Ring style)
+
+Before each fight you also pick your off-hand. Two-handed weapons (Greatsword, Halberd, Scythe, Bo Staff) cannot take a
+shield and are always held with both hands; every other weapon can take any shield or none.
+
+| Off-hand | Effect |
+|---|---|
+| Heater Shield | -5% damage taken, no tricks |
+| Buckler | Perfect block at speed 0.7, +2 recovery, you hit ×1.05, but guard breaks hurt ×1.15 |
+| Tower Shield | Free blocks, -8% damage taken, guard breaks hurt ×0.5; attacks cost +12%, you hit ×0.9, -1 recovery |
+| Spiked Shield | Any attack blocked against it costs the attacker 2 health; you hit ×0.95 |
+| No Shield | Two-handed: +12% damage, but blocks leak 12% and guard breaks hurt ×1.25 |
+
+Rivals carry shields that suit their style. `node tests/shields.js 40` runs a shield round-robin.
+
 ## Arsenal
 
 Every weapon changes damage per attack type, stamina costs, health and recovery. Most also bend one rule:
@@ -67,9 +82,9 @@ Every weapon changes damage per attack type, stamina costs, health and recovery.
 | Rapier | Feints cost half; a Thrust that punishes a Feint hits ×2 |
 | Greatsword | Guard breaks hit ×1.5 harder; slow and tiring |
 | War Hammer | A guard break drains double stamina |
-| Flail | Your Heavy cannot be interrupted by a Quick; every block leaks 20% |
+| Flail | Your Heavy cannot be interrupted by a Quick; every block leaks 15% |
 | Sabre | Fast cuts and +2 recovery; poor thrusts |
-| Sai | A blocked Quick/Thrust is a parry after a single move; perfect block at speed 0.7 |
+| Sai | When you block a Quick/Thrust it is already a parry after a single move |
 | Nunchaku | Combos hit +50% harder |
 | Bo Staff | Resting recovers +6 extra stamina; perfect block at speed 0.7 |
 | Scythe | Low attacks ×1.35, high ×0.85 |
@@ -77,7 +92,7 @@ Every weapon changes damage per attack type, stamina costs, health and recovery.
 | Whip | Every block leaks 25%; cheap feints, fragile |
 | Sword & Board | Free blocks, -8% damage taken, perfect block at 0.7; soft hits |
 
-`node tests/balance.js 40` runs a round-robin between all weapons (level 3 balanced bots). Current spread is roughly 45%-57%
+`node tests/balance.js 40` runs a round-robin between all weapons (level 3 balanced bots). Current spread is roughly 45%-54%
 average win rate per weapon.
 
 ## Install as an app (phone)
