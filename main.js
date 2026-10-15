@@ -11,18 +11,18 @@
 
   const TURN_MS = 3000;
   const ME = { name: 'You', title: 'Contender', color: '#19e6ff' };
-  // Six rivals, weakest to strongest. Each one fights with a random weapon from its own arsenal (matching its style).
+  // Six rivals, weakest to strongest. Each one fights with a random weapon and shield from its own arsenal (matching its style).
   const ROSTER = [
-    { name: 'Taro', title: 'The Apprentice', level: 1, persona: 'balanced', arsenal: ['katana', 'sabre', 'staff', 'spear'], color: '#7cff6b', taunt: 'My first tournament... don\'t underestimate me!' },
-    { name: 'Hana', title: 'The Heron', level: 2, persona: 'trickster', arsenal: ['rapier', 'whip', 'dagger', 'sai'], color: '#ff9f1c', taunt: 'Are you sure you saw where my blade was going?' },
-    { name: 'Gorm', title: 'The Anvil', level: 3, persona: 'brute', arsenal: ['axe', 'greatsword', 'hammer', 'flail'], color: '#ff3b30', taunt: 'I will split your guard in two.' },
-    { name: 'Madame Kuro', title: 'The Widow', level: 4, persona: 'turtle', arsenal: ['gladius', 'staff', 'halberd', 'spear'], color: '#bf5af2', perks: ['guard'], taunt: 'Patience... I always win by waiting.' },
-    { name: 'Ren', title: 'Silent Wall', level: 4, persona: 'duelist', arsenal: ['rapier', 'spear', 'katana', 'sai'], color: '#30d158', perks: ['armor'], taunt: '...' },
-    { name: 'Ryuga', title: 'The Champion', level: 5, persona: 'aggressive', arsenal: ['nunchaku', 'scythe', 'greatsword', 'dagger', 'katana'], color: '#ff2d95', perks: ['edge', 'lungs'], taunt: 'Three years undefeated. Show me something new.' },
+    { name: 'Taro', title: 'The Apprentice', level: 1, persona: 'balanced', arsenal: ['katana', 'sabre', 'staff', 'spear'], shields: ['kite', 'buckler', 'none'], color: '#7cff6b', taunt: 'My first tournament... don\'t underestimate me!' },
+    { name: 'Hana', title: 'The Heron', level: 2, persona: 'trickster', arsenal: ['rapier', 'whip', 'dagger', 'sai'], shields: ['buckler', 'none'], color: '#ff9f1c', taunt: 'Are you sure you saw where my blade was going?' },
+    { name: 'Gorm', title: 'The Anvil', level: 3, persona: 'brute', arsenal: ['axe', 'greatsword', 'hammer', 'flail'], shields: ['tower', 'none', 'spiked'], color: '#ff3b30', taunt: 'I will split your guard in two.' },
+    { name: 'Madame Kuro', title: 'The Widow', level: 4, persona: 'turtle', arsenal: ['gladius', 'staff', 'halberd', 'spear'], shields: ['tower', 'spiked', 'kite'], color: '#bf5af2', perks: ['guard'], taunt: 'Patience... I always win by waiting.' },
+    { name: 'Ren', title: 'Silent Wall', level: 4, persona: 'duelist', arsenal: ['rapier', 'spear', 'katana', 'sai'], shields: ['kite', 'buckler', 'spiked'], color: '#30d158', perks: ['armor'], taunt: '...' },
+    { name: 'Ryuga', title: 'The Champion', level: 5, persona: 'aggressive', arsenal: ['nunchaku', 'scythe', 'greatsword', 'dagger', 'katana'], shields: ['none', 'buckler', 'spiked'], color: '#ff2d95', perks: ['edge', 'lungs'], taunt: 'Three years undefeated. Show me something new.' },
   ];
   const FIGHT_NAMES = ['First Duel', 'Second Duel', 'Third Duel', 'Fourth Duel', 'Semifinal', 'Grand Final'];
   const G = {
-    theme: store.get('theme', 'neon'), weapon: 'katana', perks: [],
+    theme: store.get('theme', 'neon'), weapon: 'katana', shield: 'kite', perks: [],
     scene: null, fights: null,
   };
 
@@ -198,7 +198,8 @@
   };
   const weaponBody = (w, label) => `<small class="lbl">${label}</small><h3>${w.name}</h3><p>${w.desc}</p>` +
     `<div class="trait">${w.trait}</div><div class="stats">${WEAPON_STATS(w)}</div>`;
-  const weaponCard = (w, label, cls) => `<div class="card static ${cls || ''}">${weaponBody(w, label)}</div>`;
+  const shieldBody = (sh, w) => `<div class="trait">${w && w.twoHanded ? 'Two-handed grip · ' : ''}${sh.name}: ${sh.trait}</div>`;
+  const weaponCard = (w, label, cls, sh) => `<div class="card static ${cls || ''}">${weaponBody(w, label)}${sh ? shieldBody(sh, w) : ''}</div>`;
 
   async function titleScreen() {
     const rules = `<div class="legend">
@@ -227,7 +228,7 @@
     const perks = (G.perks.length ? '<ul class="perks">' + G.perks.map((id) => { const p = BD.PERKS.find((x) => x.id === id); return `<li>✔ ${p.name}: ${p.desc}</li>`; }).join('') + '</ul>' : '');
     await ask(`<h2>Fight ${i + 1} of ${G.fights.length} · ${FIGHT_NAMES[i]}</h2>${ladderHtml(i)}
       <div class="vs"><b>${esc(ME.name)} vs ${esc(foe.name)}</b> — ${esc(foe.title)}<br>level ${stars(foe.level)}<br><span class="taunt">“${esc(foe.taunt)}”</span></div>
-      <div class="cards duo">${weaponCard(BD.WEAPONS[f.weapon], 'Your weapon', 'mine')}${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs')}</div>${perks}
+      <div class="cards duo">${weaponCard(BD.WEAPONS[f.weapon], 'Your weapon', 'mine', BD.SHIELDS[f.shield])}${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs', BD.SHIELDS[foe.shield])}</div>${perks}
       <button class="cta" data-val="fight">Fight!</button>`);
   }
 
@@ -237,8 +238,19 @@
     const cards = options.map((id) => `<button class="card" data-val="${id}">${weaponBody(BD.WEAPONS[id], 'Pick')}</button>`).join('');
     return ask(`<h2>Fight ${i + 1} of ${G.fights.length} · Choose your weapon</h2>${ladderHtml(i)}
       <div class="vs"><b>${esc(foe.name)}</b> — ${esc(foe.title)}<br>carries:</div>
-      <div class="cards duo">${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs')}</div>
+      <div class="cards duo">${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs', BD.SHIELDS[foe.shield])}</div>
       <p>Pick the weapon that counters it.</p><div class="cards">${cards}</div>`);
+  }
+
+  // Off-hand: any shield, or none for two-handing. Two-handed weapons skip this (no shield possible).
+  async function shieldScreen(i, weaponId) {
+    const ids = BD.legalShields(weaponId);
+    if (ids.length === 1) return ids[0];
+    const foe = G.fights[i].foe, w = BD.WEAPONS[weaponId];
+    const cards = ids.map((id) => { const sh = BD.SHIELDS[id]; return `<button class="card" data-val="${id}"><small class="lbl">Off-hand</small><h3>${sh.name}</h3><p>${sh.desc}</p><div class="trait">${sh.trait}</div></button>`; }).join('');
+    return ask(`<h2>Fight ${i + 1} of ${G.fights.length} · Off-hand</h2>
+      <div class="vs"><b>${esc(foe.name)}</b> carries a ${BD.WEAPONS[foe.weapon].name} and ${foe.shield === 'none' ? 'no shield' : 'a ' + BD.SHIELDS[foe.shield].name}.<br>You hold a ${w.name}.</div>
+      <p>Shield or no shield? A shield guards, going without hits harder.</p><div class="cards">${cards}</div>`);
   }
 
   async function perkScreen() {
@@ -262,7 +274,7 @@
 
   async function playMatch(oppSpec) {
     const sc = G.scene;
-    const me = BD.makeFighter(Object.assign({}, ME, { weapon: G.weapon, perks: G.perks, level: 3 }));
+    const me = BD.makeFighter(Object.assign({}, ME, { weapon: G.weapon, shield: G.shield, perks: G.perks, level: 3 }));
     const foe = BD.makeFighter(oppSpec);
     const brain = BD.makeBrain(foe.level, foe.persona), habit = BD.makeBrain(1, 'balanced');
     sc.setFighters(me, foe);
@@ -297,7 +309,11 @@
   const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
   // Each rival fights with a weapon from its own arsenal. Yours is chosen before the fight (see weaponScreen).
   function dealFights() {
-    return ROSTER.map((r) => ({ foe: Object.assign({}, r, { weapon: pickOne(r.arsenal) }), weapon: null, won: null }));
+    return ROSTER.map((r) => {
+      const weapon = pickOne(r.arsenal), legal = BD.legalShields(weapon);
+      const shield = pickOne(r.shields.filter((id) => legal.includes(id)).concat(legal.length === 1 ? legal : []));
+      return { foe: Object.assign({}, r, { weapon, shield }), weapon: null, shield: null, won: null };
+    });
   }
 
   async function tournament() {
@@ -308,7 +324,8 @@
       const f = G.fights[i];
       f.weapon = await weaponScreen(i, shuffle(Array.from(unused)).slice(0, 3));
       unused.delete(f.weapon);
-      G.weapon = f.weapon;
+      f.shield = await shieldScreen(i, f.weapon);
+      G.weapon = f.weapon; G.shield = f.shield;
       await fightScreen(i);
       f.won = await playMatch(f.foe);
       if (!f.won) { G.scene.hud.round = 1; return { champion: false, r: i }; }

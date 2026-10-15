@@ -54,6 +54,21 @@ lens, slashes, a red vignette with a heartbeat and a trembling hand. Condition i
 
 Keys: `Q W E R T` attack type, `1 2 3` direction, `Z X C` block.
 
+## Off-hand: shields (Elden Ring style)
+
+Before each fight you also pick your off-hand. Two-handed weapons (Greatsword, Halberd, Scythe, Bo Staff) cannot take a
+shield and are always held with both hands; every other weapon can take any shield or none.
+
+| Off-hand | Effect |
+|---|---|
+| Heater Shield | Balanced, no tricks (the baseline) |
+| Buckler | Perfect block at speed 0.7 and +1 recovery, but guard breaks hurt ×1.25 |
+| Tower Shield | Free blocks, -10% damage taken, guard breaks hurt ×0.5; attacks cost +12%, you hit ×0.9, -1 recovery |
+| Spiked Shield | Any attack blocked against it costs the attacker 4 health; you hit ×0.95 |
+| No Shield | Two-handed: +15% damage, but blocks leak 12% and guard breaks hurt ×1.25 |
+
+Rivals carry shields that suit their style. `node tests/shields.js 40` runs a shield round-robin.
+
 ## Arsenal
 
 Every weapon changes damage per attack type, stamina costs, health and recovery. Most also bend one rule:
@@ -69,7 +84,7 @@ Every weapon changes damage per attack type, stamina costs, health and recovery.
 | War Hammer | A guard break drains double stamina |
 | Flail | Your Heavy cannot be interrupted by a Quick; every block leaks 20% |
 | Sabre | Fast cuts and +2 recovery; poor thrusts |
-| Sai | A blocked Quick/Thrust is a parry after a single move; perfect block at speed 0.7 |
+| Sai | When you block a Quick/Thrust it is already a parry after a single move; perfect block at speed 0.7 |
 | Nunchaku | Combos hit +50% harder |
 | Bo Staff | Resting recovers +6 extra stamina; perfect block at speed 0.7 |
 | Scythe | Low attacks ×1.35, high ×0.85 |
