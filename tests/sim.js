@@ -14,7 +14,7 @@ const fresh = (wa = 'katana', wb = 'katana') => BD.newDuel(mk(wa), mk(wb));
   // clean hit: Quick High vs Low block
   let r = BD.step(s, { a: dm('quick', 0, 2), b: dm('rest', -1, 2) });
   assert.strictEqual(r.out.a.kind, 'hit');
-  assert.strictEqual(s.b.hp, s.b.maxHp - Math.round(8 * 1.2));
+  assert.strictEqual(s.b.hp, s.b.maxHp - Math.round(8 * 1.2 * BD.SHIELDS.kite.armor));
 
   // correct block
   s = fresh();
@@ -196,7 +196,7 @@ function batch(label, wa, la, pa, wb, lb, pb, n) {
   const gb = (id) => { const z = duelOf(sh('kite'), sh(id)); BD.step(z, { a: dm('heavy', 1, 0), b: dm('rest', -1, 1) }); return lostBy(z, 'b'); };
   assert.ok(gb('buckler') > gb('kite') && gb('kite') > gb('tower'));
   // spiked: a blocked attacker takes reflect damage; a hit does not reflect
-  q = duelOf(sh('kite'), sh('spiked')); BD.step(q, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); assert.strictEqual(lostBy(q, 'a'), 4);
+  q = duelOf(sh('kite'), sh('spiked')); BD.step(q, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); assert.strictEqual(lostBy(q, 'a'), 2);
   q = duelOf(sh('kite'), sh('spiked')); BD.step(q, { a: dm('quick', 1, 0), b: dm('rest', -1, 2) }); assert.strictEqual(lostBy(q, 'a'), 0);
   // no shield: blocks leak; buckler: a 0.75 block is perfect
   const leakOf = (id) => { const z = duelOf(sh('kite'), sh(id)); BD.step(z, { a: dm('quick', 1, 0), b: dm('rest', -1, 1) }); return lostBy(z, 'b'); };

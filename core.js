@@ -88,9 +88,9 @@
     flail: W('flail', 'Flail', 'Heavy cannot be interrupted · Blocks leak 20%', 'The ball swings around the guard: Quick cannot cut off your Heavy and every block leaks a little.',
       { dmg: D(0.8, 1.1, 0.7), cost: C(1.05, 1.1, 1.1, 1.1), noInterrupt: true, blockChip: 0.2, hp: 100, st: 100, regen: 8, len: 100, shape: 'flail' }),
     sabre: W('sabre', 'Sabre', 'Tireless: +2 recovery', 'Fast curved cuts and good wind, but poor thrusts.',
-      { dmg: D(1.25, 1.1, 0.75), cost: C(0.85, 1, 1.1, 1), hp: 100, st: 100, regen: 10, len: 90, shape: 'sabre' }),
-    sai: W('sai', 'Sai', 'Parries from streak 1 · Perfect block at 0.7', 'Trapping forks: when you block a Quick or Thrust it is already a parry after a single move. Little damage on heavy blows.',
-      { dmg: D(1.35, 0.8, 1.1), cost: C(0.8, 1.05, 1, 0.9), parryAt: 1, perfectAt: 0.7, hp: 100, st: 100, regen: 8, len: 52, shape: 'sai' }),
+      { dmg: D(1.25, 1.1, 0.85), cost: C(0.85, 1, 1.1, 1), hp: 102, st: 100, regen: 10, len: 90, shape: 'sabre' }),
+    sai: W('sai', 'Sai', 'Parries from streak 1', 'Trapping forks: when you block a Quick or Thrust it is already a parry after a single move. Little damage on heavy blows.',
+      { dmg: D(1.35, 0.8, 1.1), cost: C(0.8, 1.05, 1, 0.9), parryAt: 1, hp: 100, st: 100, regen: 8, len: 52, shape: 'sai' }),
     nunchaku: W('nunchaku', 'Nunchaku', 'Combos hit +50% harder', 'Whirling chains: very cheap, very fast, a combo machine. Poor thrust and low health.',
       { dmg: D(1.4, 0.95, 0.85), cost: C(0.8, 1.05, 1.1, 0.9), comboBoost: 0.5, hp: 100, st: 100, regen: 8, len: 70, shape: 'nunchaku' }),
     staff: W('staff', 'Bo Staff', 'Rest recovers +6 stamina · Perfect block at 0.7', 'A monk\'s staff: endurance and a sturdy guard, nothing flashy.',
@@ -100,7 +100,7 @@
     halberd: W('halberd', 'Halberd', 'High attacks ×1.3 · Low ×0.85', 'A long pole with axe and spike: strong overhead, poor against the legs. Clumsy quick strikes.',
       { dmg: D(0.65, 1.1, 1.05), zoneMult: [1.25, 1, 0.85], cost: C(1.15, 1.05, 0.95, 1.1), hp: 100, st: 100, regen: 7, len: 150, shape: 'halberd', twoHanded: true }),
     whip: W('whip', 'Whip', 'Blocks leak 25% · Cheap feints', 'Wraps around the guard: even a correct block lets some damage through. Fragile, and weak when it must hit hard.',
-      { dmg: D(1.35, 0.8, 0.95), cost: C(0.75, 1.1, 1, 0.6), blockChip: 0.25, hp: 96, st: 100, regen: 9, len: 135, shape: 'whip' }),
+      { dmg: D(1.35, 0.9, 0.95), cost: C(0.75, 1.1, 1, 0.6), blockChip: 0.25, hp: 100, st: 100, regen: 9, len: 135, shape: 'whip' }),
     gladius: W('gladius', 'Sword & Board', 'Free blocks · -8% damage taken · Perfect block at 0.7', 'A short sword behind a heavy shield: blocking is free and sturdy, but you hit softly.',
       { dmg: D(0.85, 0.85, 0.85), cost: C(1, 1, 1, 1), blockFree: true, armor: 0.92, perfectAt: 0.7, hp: 108, st: 100, regen: 7, len: 60, shape: 'gladius' }),
   };
@@ -117,16 +117,16 @@
   //   regen    added stamina recovery
   const S = (id, name, trait, desc, o) => Object.assign({ id, name, trait, desc }, o);
   const SHIELDS = {
-    kite: S('kite', 'Heater Shield', 'Balanced', 'A sturdy all-round shield. No weak spots, no tricks.', {}),
-    buckler: S('buckler', 'Buckler', 'Perfect block at 0.7 · +1 recovery · Guard breaks hurt ×1.25',
-      'Small and quick: easy to time a perfect block and light on the arm, but a Heavy folds it.', { perfectAt: 0.7, regen: 1, gbTaken: 1.25 }),
-    tower: S('tower', 'Tower Shield', 'Free blocks · -10% damage taken · Guard breaks hurt ×0.5',
+    kite: S('kite', 'Heater Shield', '-5% damage taken', 'A sturdy all-round shield. No weak spots, no tricks.', { armor: 0.95 }),
+    buckler: S('buckler', 'Buckler', 'Perfect block at 0.7 · +2 recovery · You hit ×1.05 · Guard breaks hurt ×1.15',
+      'Small and quick: easy to time a perfect block and light on the arm, but a Heavy folds it.', { perfectAt: 0.7, regen: 2, dmgMult: 1.05, gbTaken: 1.15 }),
+    tower: S('tower', 'Tower Shield', 'Free blocks · -8% damage taken · Guard breaks hurt ×0.5',
       'A wall of iron. You are nearly unbreakable, but it is heavy: attacks cost +12% stamina, you hit ×0.9 and recover 1 less.',
-      { blockFree: true, armor: 0.9, gbTaken: 0.5, costMult: 1.12, dmgMult: 0.9, regen: -1 }),
-    spiked: S('spiked', 'Spiked Shield', 'Blocked attackers take 4 damage',
-      'Studded with iron: every attack the rival throws into your guard costs them blood. A little heavy, you hit ×0.95.', { reflect: 4, dmgMult: 0.95 }),
-    none: S('none', 'No Shield', 'Two-handed: +15% damage · Blocks leak 12% · Guard breaks hurt ×1.25',
-      'Both hands on the weapon. More bite, but your guard is just the blade.', { dmgMult: 1.15, leak: 0.12, gbTaken: 1.25 }),
+      { blockFree: true, armor: 0.92, gbTaken: 0.5, costMult: 1.12, dmgMult: 0.9, regen: -1 }),
+    spiked: S('spiked', 'Spiked Shield', 'Blocked attackers take 2 damage',
+      'Studded with iron: every attack the rival throws into your guard costs them blood. A little heavy, you hit ×0.95.', { reflect: 2, dmgMult: 0.95 }),
+    none: S('none', 'No Shield', 'Two-handed: +12% damage · Blocks leak 12% · Guard breaks hurt ×1.25',
+      'Both hands on the weapon. More bite, but your guard is just the blade.', { dmgMult: 1.12, leak: 0.12, gbTaken: 1.25 }),
   };
   const SHIELD_IDS = Object.keys(SHIELDS);
   const DEFAULT_SHIELD = 'kite';

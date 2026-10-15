@@ -61,11 +61,11 @@ shield and are always held with both hands; every other weapon can take any shie
 
 | Off-hand | Effect |
 |---|---|
-| Heater Shield | Balanced, no tricks (the baseline) |
-| Buckler | Perfect block at speed 0.7 and +1 recovery, but guard breaks hurt ×1.25 |
-| Tower Shield | Free blocks, -10% damage taken, guard breaks hurt ×0.5; attacks cost +12%, you hit ×0.9, -1 recovery |
-| Spiked Shield | Any attack blocked against it costs the attacker 4 health; you hit ×0.95 |
-| No Shield | Two-handed: +15% damage, but blocks leak 12% and guard breaks hurt ×1.25 |
+| Heater Shield | -5% damage taken, no tricks |
+| Buckler | Perfect block at speed 0.7, +2 recovery, you hit ×1.05, but guard breaks hurt ×1.15 |
+| Tower Shield | Free blocks, -8% damage taken, guard breaks hurt ×0.5; attacks cost +12%, you hit ×0.9, -1 recovery |
+| Spiked Shield | Any attack blocked against it costs the attacker 2 health; you hit ×0.95 |
+| No Shield | Two-handed: +12% damage, but blocks leak 12% and guard breaks hurt ×1.25 |
 
 Rivals carry shields that suit their style. `node tests/shields.js 40` runs a shield round-robin.
 
@@ -84,7 +84,7 @@ Every weapon changes damage per attack type, stamina costs, health and recovery.
 | War Hammer | A guard break drains double stamina |
 | Flail | Your Heavy cannot be interrupted by a Quick; every block leaks 20% |
 | Sabre | Fast cuts and +2 recovery; poor thrusts |
-| Sai | When you block a Quick/Thrust it is already a parry after a single move; perfect block at speed 0.7 |
+| Sai | When you block a Quick/Thrust it is already a parry after a single move |
 | Nunchaku | Combos hit +50% harder |
 | Bo Staff | Resting recovers +6 extra stamina; perfect block at speed 0.7 |
 | Scythe | Low attacks ×1.35, high ×0.85 |
