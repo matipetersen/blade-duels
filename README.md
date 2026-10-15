@@ -82,7 +82,7 @@ Every weapon changes damage per attack type, stamina costs, health and recovery.
 | Rapier | Feints cost half; a Thrust that punishes a Feint hits ×2 |
 | Greatsword | Guard breaks hit ×1.5 harder; slow and tiring |
 | War Hammer | A guard break drains double stamina |
-| Flail | Your Heavy cannot be interrupted by a Quick; every block leaks 20% |
+| Flail | Your Heavy cannot be interrupted by a Quick; every block leaks 15% |
 | Sabre | Fast cuts and +2 recovery; poor thrusts |
 | Sai | When you block a Quick/Thrust it is already a parry after a single move |
 | Nunchaku | Combos hit +50% harder |
