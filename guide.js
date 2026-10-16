@@ -73,7 +73,7 @@
         return svg(380, 206, 'A block at the same height stops the attack; a different height does not',
           labels + scene(14, 0, 0, true, 'Same height: blocked') + scene(196, 0, 2, false, 'Different height: HIT'));
       },
-      body: '<p>The arrow is your attack, the shield is their block. <b>Same height = blocked. Different height = it lands.</b></p><p>High hits hardest (×1.2), low the least (×0.85). Some weapons bend those numbers.</p>',
+      body: '<p>The arrow is your attack, the shield is their block. <b>Same height = blocked. Different height = it lands.</b></p><p>High hits hardest (×1.2), low the least (×0.85). Some weapons bend those numbers.</p><p>While a turn plays, the screen marks <b>H / M / L</b> on each side: where they attacked, where you blocked, where you attacked, where they blocked. A recap of the last turn stays above the buttons, with a read on the rival\'s habits.</p>',
     },
     {
       title: 'The four attacks',

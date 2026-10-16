@@ -10,15 +10,15 @@
   };
 
   const TURN_MS = 3000;
-  const ME = { name: 'You', title: 'Contender', color: '#19e6ff' };
+  const ME = { name: 'You', title: 'Contender', color: '#58c0d6' };
   // Six rivals, weakest to strongest. Each one fights with a random weapon and shield from its own arsenal (matching its style).
   const ROSTER = [
-    { name: 'Taro', title: 'The Apprentice', level: 1, persona: 'balanced', arsenal: ['katana', 'sabre', 'staff', 'spear'], shields: ['kite', 'buckler', 'none'], color: '#7cff6b', taunt: 'My first tournament... don\'t underestimate me!' },
-    { name: 'Hana', title: 'The Heron', level: 2, persona: 'trickster', arsenal: ['rapier', 'whip', 'dagger', 'sai'], shields: ['buckler', 'none'], color: '#ff9f1c', taunt: 'Are you sure you saw where my blade was going?' },
-    { name: 'Gorm', title: 'The Anvil', level: 3, persona: 'brute', arsenal: ['axe', 'greatsword', 'hammer', 'flail'], shields: ['tower', 'none', 'spiked'], color: '#ff3b30', taunt: 'I will split your guard in two.' },
-    { name: 'Madame Kuro', title: 'The Widow', level: 4, persona: 'turtle', arsenal: ['gladius', 'staff', 'halberd', 'spear'], shields: ['tower', 'spiked', 'kite'], color: '#bf5af2', perks: ['guard'], taunt: 'Patience... I always win by waiting.' },
-    { name: 'Ren', title: 'Silent Wall', level: 4, persona: 'duelist', arsenal: ['rapier', 'spear', 'katana', 'sai'], shields: ['kite', 'buckler', 'spiked'], color: '#30d158', perks: ['armor'], taunt: '...' },
-    { name: 'Ryuga', title: 'The Champion', level: 5, persona: 'aggressive', arsenal: ['nunchaku', 'scythe', 'greatsword', 'dagger', 'katana'], shields: ['none', 'buckler', 'spiked'], color: '#ff2d95', perks: ['edge', 'lungs'], taunt: 'Three years undefeated. Show me something new.' },
+    { name: 'Taro', title: 'The Apprentice', level: 1, persona: 'balanced', arsenal: ['katana', 'sabre', 'staff', 'spear'], shields: ['kite', 'buckler', 'none'], style: 'Plays it straight: a bit of everything, slow to react.', counter: 'Good place to learn. Block one height, attack another, and try a Quick into his Heavy.', color: '#8fd77a', taunt: 'My first tournament... don\'t underestimate me!' },
+    { name: 'Hana', title: 'The Heron', level: 2, persona: 'trickster', arsenal: ['rapier', 'whip', 'dagger', 'sai'], shields: ['buckler', 'none'], style: 'Feints constantly to open your guard.', counter: 'A Thrust punishes a Feint (×1.5, ignores your block). Do not block the same height twice in a row.', color: '#e8a04a', taunt: 'Are you sure you saw where my blade was going?' },
+    { name: 'Gorm', title: 'The Anvil', level: 3, persona: 'brute', arsenal: ['axe', 'greatsword', 'hammer', 'flail'], shields: ['tower', 'none', 'spiked'], style: 'Throws Heavy after Heavy.', counter: 'Your Quick cuts a Heavy short and counters it. Never leave a Heavy unblocked: guard breaks drain your stamina.', color: '#e0605a', taunt: 'I will split your guard in two.' },
+    { name: 'Madame Kuro', title: 'The Widow', level: 4, persona: 'turtle', arsenal: ['gladius', 'staff', 'halberd', 'spear'], shields: ['tower', 'spiked', 'kite'], style: 'Blocks everything and rests to wait you out.', counter: 'Feint to open her guard, then land the follow-up. Chain combos while she turtles.', color: '#b583e0', perks: ['guard'], taunt: 'Patience... I always win by waiting.' },
+    { name: 'Ren', title: 'Silent Wall', level: 4, persona: 'duelist', arsenal: ['rapier', 'spear', 'katana', 'sai'], shields: ['kite', 'buckler', 'spiked'], style: 'Pokes with Thrust and Quick.', counter: 'Do not Feint into his Thrust: it punishes you. Block his height, then answer with a combo.', color: '#62c98c', perks: ['armor'], taunt: '...' },
+    { name: 'Ryuga', title: 'The Champion', level: 5, persona: 'aggressive', arsenal: ['nunchaku', 'scythe', 'greatsword', 'dagger', 'katana'], shields: ['none', 'buckler', 'spiked'], style: 'Never stops attacking and burns his stamina.', counter: 'Block and let him run dry, then strike. A Quick cuts his Heavy short.', color: '#e0558f', perks: ['edge', 'lungs'], taunt: 'Three years undefeated. Show me something new.' },
   ];
   const FIGHT_NAMES = ['First Duel', 'Second Duel', 'Third Duel', 'Fourth Duel', 'Semifinal', 'Grand Final'];
   const G = {
@@ -251,6 +251,7 @@
     const perks = (G.perks.length ? '<ul class="perks">' + G.perks.map((id) => { const p = BD.PERKS.find((x) => x.id === id); return `<li>✔ ${p.name}: ${p.desc}</li>`; }).join('') + '</ul>' : '');
     await ask(`<h2>Fight ${i + 1} of ${G.fights.length} · ${FIGHT_NAMES[i]}</h2>${stripHtml(i)}
       <div class="vs"><b>${esc(ME.name)} vs ${esc(foe.name)}</b> — ${esc(foe.title)}<br>level ${stars(foe.level)}<br><span class="taunt">“${esc(foe.taunt)}”</span></div>
+      <div class="brief"><p><b>Their style:</b> ${esc(foe.style)}</p><p><b>How to counter:</b> ${esc(foe.counter)}</p></div>
       <div class="cards duo">${weaponCard(BD.WEAPONS[f.weapon], 'Your weapon', 'mine', BD.SHIELDS[f.shield])}${weaponCard(BD.WEAPONS[foe.weapon], esc(foe.name) + '\'s weapon', 'theirs', BD.SHIELDS[foe.shield])}</div>${perks}
       <button class="cta" data-val="fight">Fight!</button>`);
   }
@@ -292,6 +293,54 @@
     return ask(html + `<div><button class="cta" data-val="again">Try again</button></div>`);
   }
 
+  // ---------- recap of the last turn + a read on the rival ----------
+  const ZA = ['▲', '▬', '▼'];
+  const zl = (z) => (z == null || z < 0 ? '–' : ZA[z] + ' ' + ZN[z]);
+  function outcomeOf(e, mine) {
+    const d = e.dmg || 0, g = mine ? 'good' : 'bad', b = mine ? 'bad' : 'good';
+    switch (e.kind) {
+      case 'hit': return [(e.counter ? 'Counter hit −' : 'Hit −') + d, g];
+      case 'punish': return ['Punish −' + d, g];
+      case 'block': return e.perfect ? ['Perfect block', b] : [d > 0 ? 'Blocked, ' + d + ' leaked' : 'Blocked', 'neutral'];
+      case 'guardbreak': return ['Guard break −' + d, g];
+      case 'parry': return [mine ? 'Parried: you are open' : 'You parried them', b];
+      case 'interrupt': return [mine ? 'Your Heavy was cut off' : 'Their Heavy was cut off', b];
+      case 'feintOpen': return [mine ? 'They are OPEN' : 'You are OPEN', g];
+      case 'whiff': return ['Feint, nothing to open', 'neutral'];
+      default: return ['Rested', 'neutral'];
+    }
+  }
+  const recap = {
+    hist: [],
+    reset() { this.hist = []; const el = $('#recap'); el.hidden = true; el.innerHTML = ''; },
+    read() {
+      const h = this.hist.slice(-8), n = h.length;
+      if (n < 3) return '';
+      const atk = h.filter((m) => m.type !== 'rest');
+      const top = (arr) => { const c = {}; arr.forEach((k) => { c[k] = (c[k] || 0) + 1; }); const k = Object.keys(c).sort((a, b) => c[b] - c[a])[0]; return k == null ? null : [k, c[k]]; };
+      const parts = [];
+      const z = top(atk.map((m) => m.zone)), bl = top(h.map((m) => m.block)), ty = top(h.map((m) => m.type));
+      if (z && z[1] >= Math.ceil(atk.length * 0.5) && atk.length >= 3) parts.push(`aims <b>${zl(+z[0])}</b> (${z[1]} of ${atk.length}): block it`);
+      if (bl && bl[1] >= Math.ceil(n * 0.5)) parts.push(`blocks <b>${zl(+bl[0])}</b> (${bl[1]} of ${n}): hit another height`);
+      const tips = { heavy: 'leans on Heavy: a Quick cuts it short', quick: 'spams Quick: skip Heavy, it gets cut off', thrust: 'favours Thrust: never Feint into it', feint: 'feints a lot: a Thrust punishes it', rest: 'rests often: press the attack' };
+      if (ty && ty[1] >= Math.ceil(n * 0.4) && tips[ty[0]]) parts.push(tips[ty[0]]);
+      return parts.length ? 'Read on them: ' + parts.join(' · ') + '.' : 'Read on them: no clear habit yet.';
+    },
+    update(mvA, mvB, res) {
+      this.hist.push({ type: mvB.type, zone: mvB.zone, block: mvB.block });
+      const ea = res.events.find((e) => e.src === 'a'), eb = res.events.find((e) => e.src === 'b');
+      const line = (who, mv, e, mine, vs, foeBlock) => {
+        const [txt, cls] = outcomeOf(e, mine);
+        const body = mv.type === 'rest' ? `<b>${who}</b> rested <i>· ${mine ? 'their' : 'your'} block</i> ${zl(foeBlock)}` : `<b>${who}</b> ${TN(mv.type)} ${zl(mv.zone)} <i>${vs}</i> ${zl(foeBlock)}`;
+        return `<div class="rc-line">${body} <span class="res ${cls}">${txt}</span></div>`;
+      };
+      const rd = this.read();
+      const el = $('#recap');
+      el.innerHTML = '<div class="rc-title">Last turn</div>' + line('They', mvB, eb, false, 'vs your block', mvA.block) + line('You', mvA, ea, true, 'vs their block', mvB.block) + (rd ? `<div class="rc-read">${rd}</div>` : '');
+      el.hidden = false;
+    },
+  };
+
   // ---------- match ----------
   function snapF(f) { return { hp: f.hp, st: f.st, chain: f.chain.slice(), open: f.open }; }
 
@@ -303,6 +352,7 @@
     sc.setFighters(me, foe);
     const wins = { a: 0, b: 0 };
     let round = 1;
+    recap.reset();
     while (wins.a < 2 && wins.b < 2) {
       const duel = BD.newDuel(me, foe);
       sc.hud.round = round; sc.hud.turn = 0; sc.hud.limit = BD.TURN_LIMIT;
@@ -318,6 +368,7 @@
         const after = { a: snapF(duel.a), b: snapF(duel.b) };
         await sc.playTurn({ a: mvA, b: mvB }, res, after);
         sc.setHud('a', duel.a, wins.a); sc.setHud('b', duel.b, wins.b);
+        recap.update(mvA, mvB, res);
         const ro = BD.roundOver(duel);
         if (ro.over) { wins[ro.winner]++; sc.hud.a.wins = wins.a; sc.hud.b.wins = wins.b; await sc.ko(ro.winner, ro.ko); break; }
       }
@@ -366,7 +417,7 @@
     $('#panel').classList.add('locked');
     applyTheme(G.theme);
     // background demo while the title is shown
-    const fa = BD.makeFighter({ name: 'You', weapon: 'katana', color: ME.color }), fb = BD.makeFighter({ name: 'Ryuga', weapon: 'katana', color: '#ff2d95' });
+    const fa = BD.makeFighter({ name: 'You', weapon: 'katana', color: ME.color }), fb = BD.makeFighter({ name: 'Ryuga', weapon: 'katana', color: '#e0558f' });
     G.scene.setFighters(fa, fb); G.scene.setHud('a', fa, 0); G.scene.setHud('b', fb, 0); G.scene.syncHudInstant();
 
     const bT = $('#btn-theme'), bS = $('#btn-sound'), bV = $('#btn-speed'), bH = $('#btn-help');
