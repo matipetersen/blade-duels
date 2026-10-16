@@ -3,6 +3,7 @@
   "short_name": "Blade Duels",
   "description": "First-person blade duel tournament: pick direction, attack and block against the bot.",
   "lang": "en",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
