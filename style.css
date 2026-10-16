@@ -200,3 +200,5 @@ button { touch-action: manipulation; }
 .shl { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-family: system-ui, sans-serif; font-size: 11.5px; line-height: 1.35; color: var(--dim); }
 .shl b { color: var(--acc2); }
 @media (max-width: 640px) { .pitch { grid-template-columns: 1fr; } .gcombos { grid-template-columns: 1fr; } .topbar .tools { flex-wrap: wrap; } }
+
+.app-icon { display: block; width: 88px; height: 88px; border-radius: 20px; margin: 6px auto 12px; box-shadow: 0 0 0 1px var(--line), 0 6px 22px rgba(0, 0, 0, .5); }

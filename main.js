@@ -212,7 +212,7 @@
 
   async function titleScreen() {
     for (;;) {
-      const v = await ask(`<h2>Blade Duels</h2><p>Supreme Blade Tournament · ${ROSTER.length} fights to glory</p>
+      const v = await ask(`<img class="app-icon" src="${globalThis.BD_ICON || 'icons/icon-192.png'}" alt="" width="88" height="88"><h2>Blade Duels</h2><p>Supreme Blade Tournament · ${ROSTER.length} fights to glory</p>
         <div class="pitch"><div><b>3 secret picks</b><span>attack, height and block, every turn</span></div>
         <div><b>${BD.WEAPON_IDS.length} weapons · ${BD.SHIELD_IDS.length} off-hands</b><span>you choose your gear before each fight</span></div>
         <div><b>3 seconds</b><span>the faster you decide, the harder you hit</span></div></div>
