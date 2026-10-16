@@ -48,7 +48,7 @@
   function applyTheme(t) {
     G.theme = t; document.body.classList.toggle('theme-neon', t === 'neon'); document.body.classList.toggle('theme-primal', t === 'primal');
     G.scene.setTheme(t); store.set('theme', t);
-    const b = $('#btn-theme'); if (b) b.textContent = t === 'neon' ? 'Style: Neon' : 'Style: Primal';
+    const b = $('#btn-theme'); if (b) b.textContent = t === 'neon' ? 'Neon' : 'Primal';
   }
 
   // body condition and stamina (no health bars: damage shows on the mannequin)
@@ -155,7 +155,7 @@
       document.querySelectorAll('#types .btn').forEach((b) => {
         const t = b.dataset.t, ok = legal.some((m) => m.type === t && (s.zone == null || s.zone === -1 || m.zone === s.zone || t === 'rest'));
         b.disabled = !ok; b.classList.toggle('sel', s.type === t);
-        b.querySelector('small').textContent = t === 'rest' ? '+stamina' : BD.attackCost(me, t, n) + ' stamina';
+        b.querySelector('small').textContent = t === 'rest' ? '+rest' : '⚡' + BD.attackCost(me, t, n);
       });
       document.querySelectorAll('#azones .btn').forEach((b) => {
         const z = +b.dataset.z;
@@ -167,24 +167,21 @@
     },
     hint() {
       const me = this.me, foe = this.foe, n = me.chain.length, s = this.sel;
-      const chainTxt = me.chain.map((c) => TN(c.type) + ' ' + ZN[c.zone]).join(' → ');
-      let h = '';
-      if (n === 0) h = 'No streak: the whole tree is open.';
-      else {
-        h = `Streak <b>${n}/3</b>: ${chainTxt}. `;
-        if (n === 1) h += 'You can no longer repeat a direction (except Feint) and options narrow.';
-        else if (n === 2) h += 'Only adjacent directions and 1-2 types. <span class="warn">A blocked Quick or Thrust now = PARRY.</span>';
-        else h += '<b>Forced finisher!</b> Only Heavy or Thrust.';
-      }
-      if (me.open) h += ' <span class="warn">You are OPEN: your block does not count this turn.</span>';
-      if (foe.open) h += ' <span class="combo">The rival is OPEN! Their block does not count: any hit lands.</span>';
+      const chip = (cls, txt) => `<span class="hc ${cls || ''}">${txt}</span>`;
+      const c = [];
+      c.push(chip('', 'Streak ' + '●'.repeat(n) + '○'.repeat(3 - n)));
+      if (n === 1) c.push(chip('', 'new height'));
+      else if (n === 2) c.push(chip('warn', 'parry risk'));
+      else if (n >= 3) c.push(chip('warn', 'finisher: Heavy / Thrust'));
+      if (me.open) c.push(chip('bad', 'You are OPEN'));
+      if (foe.open) c.push(chip('good', 'Rival OPEN: any hit lands'));
       if (s.type && s.type !== 'rest') {
-        const c = BD.findCombo(me.chain.map((x) => x.type).concat(s.type));
-        if (c) h += ` <span class="combo">Combo: ${c.name} ×${c.mult} if it connects.</span>`;
+        const cb = BD.findCombo(me.chain.map((x) => x.type).concat(s.type));
+        if (cb) c.push(chip('good', `${cb.name} ×${cb.mult}`));
       }
-      $('#hint').innerHTML = h;
+      $('#hint').innerHTML = c.join('');
       const r = me.mods.reader && this.habit && BD.readout(this.habit);
-      $('#reader').textContent = r ? `Hawk Eye: ${foe.name} tends to attack ${ZN[r.zone]} (${Math.round(r.zoneP * 100)}%), block ${ZN[r.block]} (${Math.round(r.blockP * 100)}%) and use ${TN(r.type)} (${Math.round(r.typeP * 100)}%).` : '';
+      $('#reader').textContent = r ? `Hawk Eye: attacks ${ZN[r.zone]} ${Math.round(r.zoneP * 100)}% · blocks ${ZN[r.block]} ${Math.round(r.blockP * 100)}% · ${TN(r.type)} ${Math.round(r.typeP * 100)}%` : '';
     },
     choose(me, foe, habit) {
       this.me = me; this.foe = foe; this.habit = habit; this.sel = { type: null, zone: null, block: null };
@@ -212,11 +209,10 @@
 
   async function titleScreen() {
     for (;;) {
-      const v = await ask(`<img class="app-icon" src="${globalThis.BD_ICON || 'icons/icon-192.png'}" alt="" width="88" height="88"><h2>Blade Duels</h2><p>Supreme Blade Tournament · ${ROSTER.length} fights to glory</p>
-        <div class="pitch"><div><b>3 secret picks</b><span>attack, height and block, every turn</span></div>
-        <div><b>${BD.WEAPON_IDS.length} weapons · ${BD.SHIELD_IDS.length} off-hands</b><span>you choose your gear before each fight</span></div>
-        <div><b>3 seconds</b><span>the faster you decide, the harder you hit</span></div></div>
-        <div><button class="cta" data-val="go">Enter the tournament</button></div>
+      const v = await ask(`<img class="app-icon" src="${globalThis.BD_ICON || 'icons/icon-192.png'}" alt="" width="88" height="88"><h2>Blade Duels</h2>
+        <p class="tagline">${ROSTER.length} rivals. One champion.</p>
+        <div class="feats"><span>${BD.Guide.ATK.heavy}<b>Pick in secret</b></span><span>${BD.Guide.shieldIcon('kite', 34)}<b>${BD.WEAPON_IDS.length} weapons</b></span><span>${BD.Guide.ATK.quick}<b>3 s a turn</b></span></div>
+        <div><button class="cta" data-val="go">Play</button></div>
         <div><button class="cta alt" data-val="guide">How to play</button></div>`);
       if (v !== 'guide') break;
       await BD.Guide.open({ final: 'Back to the menu' }); store.set('seen', '1');
@@ -301,12 +297,12 @@
     switch (e.kind) {
       case 'hit': return [(e.counter ? 'Counter hit −' : 'Hit −') + d, g];
       case 'punish': return ['Punish −' + d, g];
-      case 'block': return e.perfect ? ['Perfect block', b] : [d > 0 ? 'Blocked, ' + d + ' leaked' : 'Blocked', 'neutral'];
+      case 'block': return e.perfect ? ['Perfect block', b] : [d > 0 ? 'Blocked −' + d : 'Blocked', 'neutral'];
       case 'guardbreak': return ['Guard break −' + d, g];
-      case 'parry': return [mine ? 'Parried: you are open' : 'You parried them', b];
-      case 'interrupt': return [mine ? 'Your Heavy was cut off' : 'Their Heavy was cut off', b];
-      case 'feintOpen': return [mine ? 'They are OPEN' : 'You are OPEN', g];
-      case 'whiff': return ['Feint, nothing to open', 'neutral'];
+      case 'parry': return [mine ? 'Parried' : 'You parried', b];
+      case 'interrupt': return ['Cut off', b];
+      case 'feintOpen': return [mine ? 'They are open' : 'You are open', g];
+      case 'whiff': return ['Missed', 'neutral'];
       default: return ['Rested', 'neutral'];
     }
   }
@@ -320,23 +316,23 @@
       const top = (arr) => { const c = {}; arr.forEach((k) => { c[k] = (c[k] || 0) + 1; }); const k = Object.keys(c).sort((a, b) => c[b] - c[a])[0]; return k == null ? null : [k, c[k]]; };
       const parts = [];
       const z = top(atk.map((m) => m.zone)), bl = top(h.map((m) => m.block)), ty = top(h.map((m) => m.type));
-      if (z && z[1] >= Math.ceil(atk.length * 0.5) && atk.length >= 3) parts.push(`aims <b>${zl(+z[0])}</b> (${z[1]} of ${atk.length}): block it`);
-      if (bl && bl[1] >= Math.ceil(n * 0.5)) parts.push(`blocks <b>${zl(+bl[0])}</b> (${bl[1]} of ${n}): hit another height`);
-      const tips = { heavy: 'leans on Heavy: a Quick cuts it short', quick: 'spams Quick: skip Heavy, it gets cut off', thrust: 'favours Thrust: never Feint into it', feint: 'feints a lot: a Thrust punishes it', rest: 'rests often: press the attack' };
+      if (z && z[1] >= Math.ceil(atk.length * 0.5) && atk.length >= 3) parts.push(`aims <b>${zl(+z[0])}</b> ${z[1]}/${atk.length}`);
+      if (bl && bl[1] >= Math.ceil(n * 0.5)) parts.push(`blocks <b>${zl(+bl[0])}</b> ${bl[1]}/${n}`);
+      const tips = { heavy: 'Heavy → use Quick', quick: 'Quick → skip Heavy', thrust: 'Thrust → no Feint', feint: 'Feint → Thrust it', rest: 'rests → press on' };
       if (ty && ty[1] >= Math.ceil(n * 0.4) && tips[ty[0]]) parts.push(tips[ty[0]]);
-      return parts.length ? 'Read on them: ' + parts.join(' · ') + '.' : 'Read on them: no clear habit yet.';
+      return parts.length ? parts.join(' · ') : 'no clear habit yet';
     },
     update(mvA, mvB, res) {
       this.hist.push({ type: mvB.type, zone: mvB.zone, block: mvB.block });
       const ea = res.events.find((e) => e.src === 'a'), eb = res.events.find((e) => e.src === 'b');
       const line = (who, mv, e, mine, vs, foeBlock) => {
         const [txt, cls] = outcomeOf(e, mine);
-        const body = mv.type === 'rest' ? `<b>${who}</b> rested <i>· ${mine ? 'their' : 'your'} block</i> ${zl(foeBlock)}` : `<b>${who}</b> ${TN(mv.type)} ${zl(mv.zone)} <i>${vs}</i> ${zl(foeBlock)}`;
+        const body = mv.type === 'rest' ? `<b>${who}</b> rested <i>· ${vs}</i> ${zl(foeBlock)}` : `<b>${who}</b> ${TN(mv.type)} ${zl(mv.zone)} <i>· ${vs}</i> ${zl(foeBlock)}`;
         return `<div class="rc-line">${body} <span class="res ${cls}">${txt}</span></div>`;
       };
       const rd = this.read();
       const el = $('#recap');
-      el.innerHTML = '<div class="rc-title">Last turn</div>' + line('They', mvB, eb, false, 'vs your block', mvA.block) + line('You', mvA, ea, true, 'vs their block', mvB.block) + (rd ? `<div class="rc-read">${rd}</div>` : '');
+      el.innerHTML = line('They', mvB, eb, false, 'you blocked', mvA.block) + line('You', mvA, ea, true, 'they blocked', mvB.block) + (rd ? `<div class="rc-read"><i>Habits:</i> ${rd}</div>` : '');
       el.hidden = false;
     },
   };
@@ -423,9 +419,9 @@
     const bT = $('#btn-theme'), bS = $('#btn-sound'), bV = $('#btn-speed'), bH = $('#btn-help');
     bH.onclick = async () => { panel.pause(); BD.Audio.unlock(); await BD.Guide.open({ final: 'Back to the duel', focus: false }); store.set('seen', '1'); panel.resume(); };
     bT.onclick = () => applyTheme(G.theme === 'neon' ? 'primal' : 'neon');
-    const syncSound = () => { bS.textContent = BD.Audio.muted ? 'Sound: off' : 'Sound: on'; bS.setAttribute('aria-pressed', String(!BD.Audio.muted)); };
+    const syncSound = () => { bS.textContent = BD.Audio.muted ? 'Muted' : 'Sound'; bS.setAttribute('aria-pressed', String(!BD.Audio.muted)); };
     bS.onclick = () => { BD.Audio.muted = !BD.Audio.muted; store.set('mute', BD.Audio.muted ? '1' : '0'); syncSound(); BD.Audio.unlock(); };
-    const syncSpeed = () => { bV.textContent = 'Speed ×' + G.scene.speed; };
+    const syncSpeed = () => { bV.textContent = '×' + G.scene.speed; };
     bV.onclick = () => { G.scene.speed = G.scene.speed === 1 ? 1.6 : 1; store.set('speed', G.scene.speed); syncSpeed(); };
     syncSound(); syncSpeed();
 

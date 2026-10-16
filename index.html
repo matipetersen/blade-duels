@@ -25,10 +25,10 @@
   <div class="topbar">
     <h1>Blade Duels</h1>
     <div class="tools">
-      <button class="chip" id="btn-help" type="button">How to play</button>
-      <button class="chip" id="btn-theme" type="button">Style: Neon</button>
-      <button class="chip" id="btn-sound" type="button" aria-pressed="true">Sound: on</button>
-      <button class="chip" id="btn-speed" type="button">Speed ×1</button>
+      <button class="chip" id="btn-help" type="button" title="How to play">Guide</button>
+      <button class="chip" id="btn-theme" type="button" title="Visual style">Neon</button>
+      <button class="chip" id="btn-sound" type="button" aria-pressed="true">Sound</button>
+      <button class="chip" id="btn-speed" type="button" title="Animation speed">×1</button>
     </div>
   </div>
   <div id="stage">
@@ -41,12 +41,11 @@
       <div class="vt r"><small id="vt-b"></small><span class="sb"><i id="vs-b"></i></span><span class="cond" id="vc-b"></span><b id="vn-b">Rival</b></div>
     </div>
     <div id="recap" hidden></div>
-    <div id="speedtip"><b>3 s per turn.</b> The faster you pick, the harder your attack hits and the better your block holds. Once you pick all 3 things the turn is sent automatically.</div>
     <div id="hint"></div>
-    <div class="grp"><h4>1 · Attack</h4><div class="row types" id="types"></div></div>
+    <div class="grp"><h4>Attack</h4><div class="row types" id="types"></div></div>
     <div class="pair">
-      <div class="grp"><h4>2 · Attack direction</h4><div class="row zones" id="azones"></div></div>
-      <div class="grp"><h4>3 · Block</h4><div class="row zones" id="bzones"></div></div>
+      <div class="grp"><h4>Aim</h4><div class="row zones" id="azones"></div></div>
+      <div class="grp"><h4>Block</h4><div class="row zones" id="bzones"></div></div>
     </div>
     <div id="reader"></div>
   </div>
