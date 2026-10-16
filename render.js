@@ -92,13 +92,14 @@
   const PWIN = pp({ hx: 700, hy: 330, a: -95 });
 
   // how strong the neon glow is (1 = the original, very bright look)
+  let LW = 1; // line-width boost, only used while drawing the small weapon icons
   const GLOW = 0.35;
   const gl = (n) => n * GLOW;
 
   // ---------- stroke helpers (neon / primal) ----------
   function path(ctx, pts) { ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke(); }
   function glowStroke(ctx, col, w, a) {
-    a = a == null ? 1 : a;
+    a = a == null ? 1 : a; w *= LW;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = col;
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = 0.05 * a; ctx.lineWidth = w * 2.6; ctx.stroke();
@@ -112,14 +113,14 @@
   function paint(ctx, st, o) {
     if (st.sil) { ctx.fillStyle = '#0b0b0b'; ctx.fill(); return; }
     if (st.neon) { ctx.fillStyle = o.nfill || '#0d0822'; ctx.fill(); glowStroke(ctx, o.col || '#19e6ff', o.w || 2.5, o.a); }
-    else { ctx.fillStyle = o.pfill || '#efe0c2'; ctx.fill(); ctx.lineWidth = o.pw || 5; ctx.strokeStyle = '#0b0b0b'; ctx.lineJoin = 'round'; ctx.stroke(); }
+    else { ctx.fillStyle = o.pfill || '#efe0c2'; ctx.fill(); ctx.lineWidth = (o.pw || 5) * Math.min(LW, 2.2); ctx.strokeStyle = '#0b0b0b'; ctx.lineJoin = 'round'; ctx.stroke(); }
   }
   function thick(ctx, st, pts, w, col, pcol) {
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     if (st.sil) { ctx.strokeStyle = '#0b0b0b'; ctx.lineWidth = w; path(ctx, pts); return; }
     if (st.neon) { ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); glowStroke(ctx, col, Math.max(2.5, w * 0.34)); return; }
-    ctx.strokeStyle = '#0b0b0b'; ctx.lineWidth = w + 8; path(ctx, pts);
-    ctx.strokeStyle = pcol || col; ctx.lineWidth = w; path(ctx, pts);
+    ctx.strokeStyle = '#0b0b0b'; ctx.lineWidth = w * Math.min(LW, 1.7) + 8 * Math.min(LW, 2.2); path(ctx, pts);
+    ctx.strokeStyle = pcol || col; ctx.lineWidth = w * Math.min(LW, 1.7); path(ctx, pts);
   }
   function poly(ctx, pts) { ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.closePath(); }
   function capsule(ctx, a, b, w1, w2) {
@@ -1191,5 +1192,17 @@
     return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
   }
 
-  Object.assign(BD, { Scene, condition, W, H });
+  // small picture of a weapon for the pick screens (drawn with the same code as in the duel, cached as a data URL)
+  const ICONS = {};
+  function weaponIcon(id, px, theme) {
+    const w = BD.WEAPONS[id]; if (!w) return '';
+    const key = id + '/' + px + '/' + theme; if (ICONS[key]) return ICONS[key];
+    const S = 2, size = px * S, c = document.createElement('canvas'); c.width = c.height = size;
+    const ctx = c.getContext('2d'), L = WLEN[w.shape], t = WTHK[w.shape], k = (size * 0.74) / L;
+    ctx.translate(size * 0.2, size * 0.8); ctx.scale(k, k);
+    LW = 1.6 / k;
+    try { weaponShape(ctx, { neon: theme !== 'primal', sil: false }, w.shape, 0, 0, -45, L, t, '#58c0d6'); } finally { LW = 1; }
+    return (ICONS[key] = c.toDataURL('image/png'));
+  }
+  Object.assign(BD, { Scene, condition, W, H, weaponIcon });
 })();

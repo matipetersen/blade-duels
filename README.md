@@ -15,6 +15,13 @@ time with **How to play**: on the title screen, or the chip in the top bar durin
 **pauses the 3-second clock**. Navigate with the buttons, the dots, swipe left/right, or the arrow keys; `Esc` closes it.
 The illustrations are inline SVG (`guide.js`) and follow the Neon / Primal theme.
 
+## Lean by default, detail on demand
+
+The screens are kept short. The **Info** button in the top bar switches on the detailed view (it remembers your choice):
+the 3-second tip, a sentence for the streak state, a plain explanation of why each side's move landed or not, longer habit
+tips, a short description under each attack button, and the stamina-cost lines on the weapon cards.
+The weapon pick cards show a drawing of each weapon (drawn with the same code as the duel; `BD.weaponIcon`).
+
 ## Rules
 
 Every turn you pick **in secret** three things, and so does the bot. Then the picks are revealed and resolved at once:

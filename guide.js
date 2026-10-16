@@ -188,6 +188,6 @@
     });
   }
 
-  BD.Guide = { open, shieldIcon, PAGES };
+  BD.Guide = { open, shieldIcon, ATK, PAGES };
   if (typeof module !== 'undefined' && module.exports) module.exports = BD;
 })();
